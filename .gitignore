@@ -8,3 +8,4 @@ node_modules
 mocks-investor-day-app
 scratch
 .local-domain
+tsconfig.tsbuildinfo
