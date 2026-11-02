@@ -29,7 +29,7 @@ export default function MyDay() {
   const scheduledMins = useMemo(() => (d?.notes || []).reduce((n, x) => n + Math.max(1, Math.round((+new Date(x.session.endAt) - +new Date(x.session.startAt)) / 60000)), 0), [d]);
   const figures = useMemo(() => pickFigures(d?.notes || []), [d]);
   const [dateLabel, setDateLabel] = useState(""); // client-only: locale formatting differs between server and browser
-  useEffect(() => { setDateLabel(new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" })); }, []);
+  useEffect(() => { setDateLabel(new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kolkata" })); }, []);
 
   return (
     <App>
