@@ -28,6 +28,7 @@ export default function LivePage() {
   const onScroll = () => { const el = txRef.current; if (!el) return; setFollow(el.scrollHeight - el.scrollTop - el.clientHeight < 60); };
   const recent = useMemo(() => segments.slice(-80), [segments]);
   const status = state?.status || s?.status || "upcoming";
+  if (data && !s) return <App dark><div className="screen pad" style={{ justifyContent: "center", gap: 16, textAlign: "center" }}><div className="orb quiet" /><h2>This session isn&apos;t on the agenda any more.</h2><Link className="btn ghost" href="/home">Back to the agenda</Link></div></App>;
   return (
     <App dark>
       <div className="screen">

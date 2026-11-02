@@ -116,7 +116,8 @@ export async function buildChatContext(opts: { attendeeId: ObjectId; question: s
     if (total > 0) {
       const [qv] = await embed([opts.question], { attendeeId: opts.attendeeId.toString() });
       const all = await chunks.find({ sessionId: { $in: sessionIds } }, { projection: { embedding: 1, documentId: 1, sessionId: 1, page: 1, title: 1, text: 1, numbers: 1 } }).toArray();
-      const scored = all.map((c) => ({ c, score: cosine(qv, c.embedding) })).sort((a, b) => b.score - a.score).slice(0, 8).filter((x) => x.score > 0.35);
+      // Slight preference for the deck of the session the investor is looking at right now.
+      const scored = all.map((c) => ({ c, score: cosine(qv, c.embedding) + (focus && c.sessionId.toString() === focus ? 0.06 : 0) })).sort((a, b) => b.score - a.score).slice(0, 8).filter((x) => x.score > 0.35);
       const docs = await (await C.documents()).find({ _id: { $in: scored.map((x) => x.c.documentId) } }, { projection: { name: 1 } }).toArray();
       const byDoc = new Map(docs.map((d) => [d._id.toString(), d.name]));
       const bySess = new Map(sessions.map((s) => [s._id.toString(), s.title]));

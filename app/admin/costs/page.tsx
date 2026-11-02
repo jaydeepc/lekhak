@@ -53,7 +53,7 @@ export default function CostsPage() {
             <div className="field"><label>Live text out / minute</label><input className="input" type="number" step="0.001" value={p.liveTextPerMin} onChange={(e) => setP({ ...p, liveTextPerMin: +e.target.value })} /></div>
             <div className="field"><label>Embeddings / 1M tokens</label><input className="input" type="number" step="0.01" value={p.embedPerM} onChange={(e) => setP({ ...p, embedPerM: +e.target.value })} /></div>
             <div className="field"><label>₹ per $</label><input className="input" type="number" step="0.1" value={p.inrPerUsd} onChange={(e) => setP({ ...p, inrPerUsd: +e.target.value })} /></div>
-            <div className="wide btn-row"><button className="btn inline" onClick={save}>Save prices</button><span className="small">Defaults are Gemini API list prices (Nov 2026). Thinking tokens count as output.</span></div>
+            <div className="span-all btn-row"><button className="btn inline" onClick={save}>Save prices</button><span className="small">Defaults are Gemini API list prices (Nov 2026). Thinking tokens count as output.</span></div>
           </div>}
         </div>
       </div>

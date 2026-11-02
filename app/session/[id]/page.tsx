@@ -7,8 +7,9 @@ import { Bell, Lock, Spark, Unlock } from "@/components/icons";
 import { api, fmtOffset, timeHM, useSessions, type Segment } from "@/components/api";
 import { useRequireMe } from "@/components/guard";
 import { useToast } from "@/components/ui";
+import { DeckViewer, type DeckDoc } from "@/components/DeckViewer";
 
-interface Doc { id: string; name: string; pages: number; slides: { page: number; title: string; text: string; numbers: string[] }[] }
+type Doc = DeckDoc;
 
 export default function SessionPage() {
   const me = useRequireMe();
@@ -21,7 +22,10 @@ export default function SessionPage() {
   const [segs, setSegs] = useState<Segment[] | null>(null);
   useEffect(() => { if (!s?.open) return; api<{ documents: Doc[] }>(`/api/sessions/${id}/documents`).then((r) => setDocs(r.documents)).catch(() => setDocs([])); }, [id, s?.open]);
   useEffect(() => { if (tab !== "transcript" || !s?.open) return; api<{ segments: Segment[] }>(`/api/sessions/${id}/segments?after=0`).then((r) => setSegs(r.segments)).catch(() => setSegs([])); }, [tab, id, s?.open]);
-  if (!s) return <App><div className="screen"><div className="skel" style={{ height: 280 }} /></div></App>;
+  if (!s) {
+    if (!data) return <App><div className="screen"><div className="skel" style={{ height: 280 }} /></div></App>;
+    return <App><div className="screen pad" style={{ justifyContent: "center", gap: 16, textAlign: "center" }}><div className="orb quiet" /><h2>This session isn&apos;t on the agenda any more.</h2><p className="lead">It may have been removed or renamed by the host.</p><Link className="btn" href="/home">Back to the agenda</Link></div></App>;
+  }
   if (s.status === "live" || s.status === "paused") { if (typeof window !== "undefined") window.location.replace(`/live/${s.id}`); return null; }
   if (!s.open) {
     return (
@@ -44,8 +48,8 @@ export default function SessionPage() {
       <div className="tabs"><button className={tab === "about" ? "on" : ""} onClick={() => setTab("about")}>About</button><button className={tab === "deck" ? "on" : ""} onClick={() => setTab("deck")}>Deck{totalSlides ? ` · ${totalSlides}` : ""}</button><button className={tab === "transcript" ? "on" : ""} onClick={() => setTab("transcript")}>Transcript{s.lastSeq ? ` · ${s.lastSeq}` : ""}</button></div>
       <div className="pad" style={{ paddingTop: 22, paddingBottom: 22, flex: 1 }}>
         {tab === "about" && <div className="col" style={{ gap: 16 }}>{s.tagline && <p style={{ margin: 0, fontSize: 18, fontWeight: 800, lineHeight: 1.35, borderLeft: "3px solid var(--orange)", paddingLeft: 14 }}>{s.tagline}</p>}<p className="lead">{s.description || "Details to follow."}</p>{s.status === "ended" && <p className="small">This session has ended. Lekhak kept {s.lastSeq} moments — ask anything, or read the transcript.</p>}</div>}
-        {tab === "deck" && (docs === null ? <div className="skel" style={{ height: 120 }} /> : !docs.length ? <p className="lead">The deck hasn&apos;t been shared yet. When the host uploads it, every slide appears here and Lekhak can quote it.</p> : (
-          <div className="col" style={{ gap: 12 }}>{docs.map((d) => <div key={d.id} className="col" style={{ gap: 10 }}><div className="row between"><div className="label">{d.name}</div>{me && <a href={`/api/documents/${d.id}/file`} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 800 }}>Open PDF</a>}</div>{d.slides.map((sl) => <div key={sl.page} className="slide"><div className="n">{String(sl.page).padStart(2, "0")}</div><div style={{ minWidth: 0 }}><b>{sl.title}</b><p>{sl.text}</p>{sl.numbers.length > 0 && <div className="row" style={{ gap: 6, flexWrap: "wrap", marginTop: 6 }}>{sl.numbers.slice(0, 3).map((n, i) => <span key={i} className="chip tint" style={{ letterSpacing: 0, textTransform: "none" }}>{n}</span>)}</div>}</div></div>)}</div>)}</div>
+        {tab === "deck" && (docs === null ? <div className="skel" style={{ height: 200 }} /> : !docs.length ? <p className="lead">The deck hasn&apos;t been shared yet. When the host uploads it, every slide appears here and Lekhak can quote it.</p> : (
+          <div className="col" style={{ gap: 22 }}>{docs.map((d) => <DeckViewer key={d.id} doc={d} canOpen={Boolean(me)} />)}</div>
         ))}
         {tab === "transcript" && (segs === null ? <div className="skel" style={{ height: 120 }} /> : !segs.length ? <p className="lead">No transcript yet.</p> : <div className="col" style={{ gap: 12 }}>{segs.map((g) => <div key={g.seq} className="tline"><div className="t">{fmtOffset(g.offsetMs)}</div><p style={{ color: "var(--ink)" }}>{g.text}</p></div>)}</div>)}
       </div>

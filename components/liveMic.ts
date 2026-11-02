@@ -47,11 +47,15 @@ export class LiveMic {
     this.startedAt = startedAt || Date.now();
     this.opts.onStatus?.("connecting");
     this.stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: this.opts.deviceId ? { exact: this.opts.deviceId } : undefined, channelCount: 1, echoCancellation: false, noiseSuppression: true, autoGainControl: true } });
-    this.ctx = new AudioContext({ sampleRate: TARGET_RATE }); // browsers that can't do 16k will give their native rate; we resample below
+    // Capture at the device's native rate (typically 44.1/48 kHz) and decimate to 16 kHz ourselves — forcing a 16 kHz
+    // context is refused or glitchy on some hardware, which shows up as silence at the model.
+    this.ctx = new AudioContext();
+    if (this.ctx.state === "suspended") await this.ctx.resume();
     const src = this.ctx.createMediaStreamSource(this.stream);
     const proc = this.ctx.createScriptProcessor(4096, 1, 1);
     this.node = proc;
     const inRate = this.ctx.sampleRate;
+    this.opts.onStatus?.("connecting", `capturing at ${inRate} Hz`);
     const perChunk = Math.round((TARGET_RATE * CHUNK_MS) / 1000);
     proc.onaudioprocess = (e) => {
       if (this.stopped) return;
@@ -73,9 +77,12 @@ export class LiveMic {
         this.send(pcm16b64(out));
       }
     };
-    src.connect(proc); proc.connect(this.ctx.destination);
-    this.usageTimer = setInterval(() => { if (this.usageAcc >= 30) { this.opts.onUsage?.(this.usageAcc); this.usageAcc = 0; } }, 5000);
-    await this.openSession();
+    // ScriptProcessor only runs when connected to the destination; route it through a muted gain so the room doesn't hear itself.
+    const mute = this.ctx.createGain(); mute.gain.value = 0;
+    src.connect(proc); proc.connect(mute); mute.connect(this.ctx.destination);
+    this.usageTimer = setInterval(() => { if (this.usageAcc >= 30 && this.session) { this.opts.onUsage?.(this.usageAcc); this.usageAcc = 0; } }, 5000);
+    try { await this.openSession(); }
+    catch (e) { console.error("[LiveMic] could not open the Gemini Live session", e); await this.stop(); throw e; }
   }
 
   private send(b64: string) {
@@ -94,7 +101,7 @@ export class LiveMic {
   }
 
   private async openSession() {
-    const tok = await fetch("/api/gemini/token", { method: "POST" }).then(async (r) => { if (!r.ok) throw new Error((await r.json().catch(() => ({})))?.error || "Could not get a live token"); return r.json(); });
+    const tok = await fetch("/api/gemini/token", { method: "POST" }).then(async (r) => { if (!r.ok) throw new Error((await r.json().catch(() => ({})))?.error || `Could not get a live token (HTTP ${r.status})`); return r.json(); });
     const ai = new GoogleGenAI({ apiKey: tok.token, httpOptions: { apiVersion: "v1alpha" } });
     const config: Record<string, unknown> = { responseModalities: [Modality.TEXT], inputAudioTranscription: { languageCodes: [], mode: tok.mode, ...(tok.customVocabulary?.length ? { customVocabulary: tok.customVocabulary } : {}) }, ...(tok.vad ? { realtimeInputConfig: tok.vad } : {}) };
     const session = await ai.live.connect({
@@ -115,7 +122,7 @@ export class LiveMic {
           }
           if (m.goAway && !this.stopped) void this.rotate();
         },
-        onerror: (e) => { this.opts.onStatus?.("error", e.message); },
+        onerror: (e) => { console.error("[LiveMic] session error", e); this.opts.onStatus?.("error", e.message); },
         onclose: (e) => { if (!this.stopped && this.session === session) { this.opts.onStatus?.("rotating", e.reason || "reconnecting"); void this.rotate(true); } },
       },
     });
@@ -133,6 +140,7 @@ export class LiveMic {
       if (old && !force) { try { old.sendRealtimeInput({ audioStreamEnd: true }); } catch { /* ignore */ } setTimeout(() => { try { old.close(); } catch { /* ignore */ } }, 4000); }
       await this.openSession();
     } catch (e) {
+      console.error("[LiveMic] reconnect failed", e);
       this.opts.onStatus?.("error", e instanceof Error ? e.message : "reconnect failed");
       setTimeout(() => { this.rotating = false; if (!this.stopped) void this.rotate(true); }, 2000);
       return;
@@ -153,13 +161,16 @@ export class LiveMic {
   }
 }
 
+/** Box-filter decimation: average every `from/to` input samples (cheap anti-aliasing), good for speech. */
 function resample(input: Float32Array, from: number, to: number): Float32Array {
   const ratio = from / to;
   const n = Math.floor(input.length / ratio);
   const out = new Float32Array(n);
   for (let i = 0; i < n; i++) {
-    const pos = i * ratio, i0 = Math.floor(pos), i1 = Math.min(input.length - 1, i0 + 1), frac = pos - i0;
-    out[i] = input[i0] * (1 - frac) + input[i1] * frac;
+    const start = i * ratio, end = Math.min(input.length, start + ratio);
+    let sum = 0, cnt = 0;
+    for (let j = Math.floor(start); j < end; j++) { sum += input[j]; cnt++; }
+    out[i] = cnt ? sum / cnt : 0;
   }
   return out;
 }

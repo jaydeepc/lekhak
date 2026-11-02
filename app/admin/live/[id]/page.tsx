@@ -20,6 +20,8 @@ export default function Recorder() {
   const { segments, interim: remoteInterim, state } = useLiveTranscript(id);
   const [mic, setMic] = useState<LiveMic | null>(null);
   const [micStatus, setMicStatus] = useState<string>("stopped");
+  const [micError, setMicError] = useState<string | null>(null);
+  const [stats, setStats] = useState({ interims: 0, finals: 0, saved: 0, failed: 0 });
   const [level, setLevel] = useState(0);
   const [localInterim, setLocalInterim] = useState("");
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
@@ -60,18 +62,28 @@ export default function Recorder() {
     liveStartRef.current = startedAt;
     const m = new LiveMic({
       deviceId: deviceId || undefined,
-      onInterim: pushInterim,
+      onInterim: (t) => { if (t) setStats((x) => ({ ...x, interims: x.interims + 1 })); pushInterim(t); },
       onFinal: (text, offsetMs) => {
-        setLocalInterim("");
-        api(`/api/admin/sessions/${id}/segments`, { method: "POST", json: { segments: [{ text, offsetMs }] } }).catch((e) => toast(`Could not save a line: ${e.message}`));
+        setLocalInterim(""); setStats((x) => ({ ...x, finals: x.finals + 1 }));
+        api(`/api/admin/sessions/${id}/segments`, { method: "POST", json: { segments: [{ text, offsetMs }] } })
+          .then(() => setStats((x) => ({ ...x, saved: x.saved + 1 })))
+          .catch((e) => { setStats((x) => ({ ...x, failed: x.failed + 1 })); setMicError(`Could not save a line: ${e.message}`); });
         api(`/api/admin/sessions/${id}/segments`, { method: "PATCH", json: { interim: "" } }).catch(() => {});
       },
-      onStatus: (st, detail) => { setMicStatus(st + (detail ? ` · ${detail}` : "")); if (st === "error") toast(detail || "Microphone error"); },
+      onStatus: (st, detail) => {
+        setMicStatus(st + (detail ? ` · ${detail}` : ""));
+        if (st === "error") setMicError(detail || "Microphone or Gemini Live error");
+        if (st === "listening") setMicError(null);
+      },
       onLevel: setLevel,
       onUsage: (secs) => api("/api/gemini/live-usage", { method: "POST", json: { audioSeconds: secs, sessionId: id } }).catch(() => {}),
     });
-    setMic(m);
-    try { await m.start(startedAt); } catch (e) { setMic(null); toast(e instanceof Error ? e.message : "Could not start the microphone"); }
+    setMic(m); setMicError(null); setStats({ interims: 0, finals: 0, saved: 0, failed: 0 });
+    try { await m.start(startedAt); } catch (e) {
+      setMic(null);
+      const msg = e instanceof Error ? e.message : "Could not start the microphone";
+      setMicError(/denied|permission|NotAllowed/i.test(msg) ? "Microphone access was blocked. Allow the microphone for this site in the browser's address bar, then press Start again." : msg);
+    }
   };
   const stopMic = async () => { if (!mic) return; await mic.stop(); setMic(null); setLocalInterim(""); api(`/api/admin/sessions/${id}/segments`, { method: "PATCH", json: { interim: "" } }).catch(() => {}); };
   const pause = async () => { await stopMic(); await control("pause"); };
@@ -102,7 +114,9 @@ export default function Recorder() {
             <div className="col" style={{ gap: 12 }}>
               <div className="field"><label>Microphone</label><select className="input" value={deviceId} onChange={(e) => setDeviceId(e.target.value)} disabled={Boolean(mic)}><option value="">Default microphone</option>{devices.map((d) => <option key={d.deviceId} value={d.deviceId}>{d.label || "Microphone"}</option>)}</select></div>
               <div className="meter"><i style={{ width: `${Math.min(100, level * 400)}%` }} /></div>
-              <div className="small" style={{ fontWeight: 700 }}>Gemini Live: {mic ? micStatus : "idle"}</div>
+              <div className="small" style={{ fontWeight: 700 }}>Gemini Live: {mic ? micStatus : "idle"}{mic ? ` · ${stats.interims} captions · ${stats.finals} lines · ${stats.saved} saved${stats.failed ? ` · ${stats.failed} failed` : ""}` : ""}</div>
+              {micError && <div className="err">{micError}</div>}
+              {mic && micStatus.startsWith("listening") && level < 0.002 && stats.interims === 0 && <div className="err" style={{ background: "#FFF4D6", color: "#8A5A00" }}>No sound is reaching the microphone. Check the input device above and the laptop's input volume.</div>}
               {!mic ? <button className="btn bigbtn" disabled={busy} onClick={start}><Mic />{status === "live" ? "Resume listening" : status === "paused" ? "Resume session" : status === "ended" ? "Reopen & listen" : "Go live & start listening"}</button>
                 : <button className="btn bigbtn stop" onClick={stopMic}>Stop microphone (stay live)</button>}
               <div className="btn-row">
