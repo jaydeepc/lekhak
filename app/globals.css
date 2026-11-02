@@ -343,3 +343,16 @@ textarea.input{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
 .md-foot b{display:block;font-size:13px}
 .md-foot span{font-size:12px;color:var(--muted);font-weight:700}
 @media print{.md *{-webkit-print-color-adjust:exact;print-color-adjust:exact}.md-hero{min-height:200px}.md-note{break-inside:avoid}.md-quote{break-inside:avoid}}
+
+/* themes, room, claims */
+.md-themes{display:flex;flex-direction:column;gap:14px}
+.md-theme b{font-size:15px;color:var(--navy-2)}
+.md-theme .pct{font-size:13px;font-weight:800;color:var(--orange-deep);font-variant-numeric:tabular-nums}
+.md-theme p{margin:6px 0 0;font-size:13px;line-height:1.45;color:var(--ink)}
+.md-room{display:flex;flex-direction:column;gap:12px}
+.md-room-row b{font-size:14px;color:var(--navy-2)}
+.md-room-row .ex{display:block;margin-top:5px;font-size:12px;color:var(--muted);font-weight:700;font-style:italic}
+.md-claims{border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.md-claim{display:grid;grid-template-columns:40px 1fr auto;gap:8px;align-items:start;font-size:13px;line-height:1.4}
+.md-claim .t{font-size:11px;font-weight:800;color:var(--orange-deep);font-variant-numeric:tabular-nums;padding-top:2px;text-align:right}
+.md-claim .chip{padding:4px 7px;font-size:10px;margin-top:1px}

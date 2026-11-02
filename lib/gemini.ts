@@ -194,3 +194,40 @@ export async function threeLines(opts: { notes: { title: string; headline: strin
   await logUsage({ kind: "summary", model: CHAT_MODEL, usage: r.usageMetadata, attendeeId: opts.attendeeId });
   return (r.text || "").trim();
 }
+
+/* ---------------- shared session insights (themes + claims vs deck) ---------------- */
+export interface SessionInsights { themes: { name: string; share: number; gist: string }[]; claims: { t: string; claim: string; slide: number | null }[] }
+export async function sessionInsights(opts: { title: string; speaker: string; lines: { t: string; text: string }[]; slides: { page: number; title: string; text: string }[]; sessionId?: string }): Promise<SessionInsights> {
+  const prompt = `You are Lekhak, an AI note-taker at an investor day. Analyse the transcript of "${opts.title}" (${opts.speaker || "speaker"}).
+
+1. "themes": 3 to 6 themes the speaker actually spent time on, each {"name": 2–4 words, "share": percent of talk time (integers summing to 100), "gist": one crisp sentence in English (max 18 words) stating what was said about it, with figures if spoken}.
+2. "claims": up to 5 of the most important, concrete claims the speaker made, each {"t":"mm:ss","claim": one sentence quoting or closely paraphrasing the words, "slide": the slide number from the DECK list that supports or shows the same point, or null if no slide covers it}.
+Return ONLY JSON: {"themes":[…],"claims":[…]}.
+
+DECK (slide number: title — text):
+${opts.slides.length ? opts.slides.map((s) => `${s.page}: ${s.title} — ${s.text.slice(0, 220).replace(/\s+/g, " ")}`).join("\n") : "(no deck uploaded)"}
+
+TRANSCRIPT:
+${opts.lines.map((l) => `[${l.t}] ${l.text}`).join("\n")}`;
+  const r = await ai().models.generateContent({ model: CHAT_MODEL, contents: prompt, config: { responseMimeType: "application/json", thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, temperature: 0.3, maxOutputTokens: 4096 } });
+  await logUsage({ kind: "summary", model: CHAT_MODEL, usage: r.usageMetadata, sessionId: opts.sessionId });
+  const j = safeJson<SessionInsights>(r.text || "") || { themes: [], claims: [] };
+  const themes = (Array.isArray(j.themes) ? j.themes : []).map((t) => ({ name: String(t.name || "").slice(0, 40), share: Math.max(0, Math.round(Number(t.share) || 0)), gist: String(t.gist || "").slice(0, 200) })).filter((t) => t.name).slice(0, 6);
+  const total = themes.reduce((n, t) => n + t.share, 0) || 1;
+  for (const t of themes) t.share = Math.round((t.share / total) * 100);
+  const claims = (Array.isArray(j.claims) ? j.claims : []).map((c) => ({ t: String(c.t || ""), claim: String(c.claim || "").slice(0, 240), slide: typeof c.slide === "number" && c.slide > 0 ? c.slide : null })).filter((c) => c.claim).slice(0, 5);
+  return { themes, claims };
+}
+
+/* ---------------- what the whole room asked (anonymised) ---------------- */
+export interface RoomAsked { topics: { topic: string; count: number; example: string }[] }
+export async function roomAsked(questions: string[]): Promise<RoomAsked> {
+  const prompt = `These are questions investors asked an AI note-taker during an investor day (anonymous, mixed languages). Group them into 3 to 6 topics. For each: {"topic": 2–5 words in English, "count": how many questions belong to it, "example": one representative question, translated to English if needed, max 14 words}. Order by count, descending. Return ONLY JSON: {"topics":[…]}.
+
+QUESTIONS:
+${questions.map((q, i) => `${i + 1}. ${q.slice(0, 200)}`).join("\n")}`;
+  const r = await ai().models.generateContent({ model: CHAT_MODEL, contents: prompt, config: { responseMimeType: "application/json", thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, temperature: 0.3, maxOutputTokens: 2048 } });
+  await logUsage({ kind: "summary", model: CHAT_MODEL, usage: r.usageMetadata });
+  const j = safeJson<RoomAsked>(r.text || "") || { topics: [] };
+  return { topics: (Array.isArray(j.topics) ? j.topics : []).map((t) => ({ topic: String(t.topic || "").slice(0, 60), count: Math.max(1, Math.round(Number(t.count) || 1)), example: String(t.example || "").slice(0, 160) })).filter((t) => t.topic).slice(0, 6) };
+}

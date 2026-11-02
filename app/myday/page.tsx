@@ -6,8 +6,9 @@ import { Back, Logo, Spark, Unlock } from "@/components/icons";
 import { api, timeHM, useSessions, type Session } from "@/components/api";
 import { useRequireMe } from "@/components/guard";
 
-interface Note { session: Session; minutes: number; unlocked: boolean; segmentsHeard: number; totalSegments: number; windows: { from: string; to: string }[]; summary: { headline: string; points: { t: string; point: string }[]; numbers: string[]; createdAt: string } | null }
-interface Day { notes: Note[]; threeLines: string; questions: { id: string; text: string; at: string }[]; totals: { sessions: number; attended: number; minutes: number; questions: number } }
+interface Insights { themes: { name: string; share: number; gist: string }[]; claims: { t: string; claim: string; slide: number | null }[] }
+interface Note { session: Session; minutes: number; unlocked: boolean; segmentsHeard: number; totalSegments: number; windows: { from: string; to: string }[]; summary: { headline: string; points: { t: string; point: string }[]; numbers: string[]; createdAt: string } | null; insights: Insights | null }
+interface Day { notes: Note[]; room: { topic: string; count: number; example: string }[]; threeLines: string; questions: { id: string; text: string; at: string }[]; totals: { sessions: number; attended: number; minutes: number; questions: number } }
 
 export default function MyDay() {
   const me = useRequireMe();
@@ -28,6 +29,7 @@ export default function MyDay() {
   const mins = d?.totals.minutes || 0;
   const scheduledMins = useMemo(() => (d?.notes || []).reduce((n, x) => n + Math.max(1, Math.round((+new Date(x.session.endAt) - +new Date(x.session.startAt)) / 60000)), 0), [d]);
   const figures = useMemo(() => pickFigures(d?.notes || []), [d]);
+  const themes = useMemo(() => mergeThemes(d?.notes || []), [d]);
   const [dateLabel, setDateLabel] = useState(""); // client-only: locale formatting differs between server and browser
   useEffect(() => { setDateLabel(new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kolkata" })); }, []);
 
@@ -68,8 +70,8 @@ export default function MyDay() {
                 </div>
               </section>
 
-              {/* ---- day timeline ---- */}
-              {talks.length > 0 && d.notes.length > 0 && <Timeline talks={talks} notes={d.notes} />}
+              {/* ---- what the day was about ---- */}
+              {themes.length > 0 && <Themes themes={themes} />}
 
               {/* ---- three lines ---- */}
               {d.threeLines && (
@@ -94,6 +96,16 @@ export default function MyDay() {
               {/* ---- per-session notes ---- */}
               {d.notes.length > 0 && <div className="md-h"><span className="label">Your sessions</span><span className="tiny">{d.notes.length} with notes</span></div>}
               {d.notes.map((n) => <NoteCard key={n.session.id} n={n} />)}
+
+              {/* ---- what the room asked ---- */}
+              {d.room.length > 0 && (
+                <section className="md-card">
+                  <div className="md-h"><span className="label">What the room is asking</span><span className="tiny">all investors · anonymous</span></div>
+                  <div className="md-room">{d.room.map((t, i) => { const max = Math.max(...d.room.map((x) => x.count)); return (
+                    <div key={i} className="md-room-row"><div className="row between"><b>{t.topic}</b><span className="tiny">{t.count} question{t.count > 1 ? "s" : ""}</span></div><div className="md-bar"><i style={{ width: `${Math.max(6, Math.round((t.count / max) * 100))}%` }} /></div><span className="ex">“{t.example}”</span></div>
+                  ); })}</div>
+                </section>
+              )}
 
               {/* ---- questions ---- */}
               {d.questions.length > 0 && (
@@ -128,34 +140,20 @@ function Ring({ value, max }: { value: number; max: number }) {
   );
 }
 
-/** Where you were, hour by hour: scheduled slot as a light track, your presence as the orange fill. */
-function Timeline({ talks, notes }: { talks: Session[]; notes: Note[] }) {
-  const t0 = Math.min(...talks.map((s) => +new Date(s.startAt))), t1 = Math.max(...talks.map((s) => +new Date(s.endAt)));
-  const span = Math.max(1, t1 - t0);
-  const W = 100; // percent-based x
-  const x = (t: number) => Math.max(0, Math.min(W, ((t - t0) / span) * W));
-  const rows = notes.slice(0, 8);
-  const hours: number[] = [];
-  const step = span > 6 * 3600_000 ? 2 : 1;
-  for (let h = new Date(t0).setMinutes(0, 0, 0); h <= t1; h += step * 3600_000) if (h >= t0 - 1) hours.push(h);
+/** What the talks you attended were about: share of airtime per theme, with the gist. */
+function Themes({ themes }: { themes: { name: string; share: number; gist: string; session: string }[] }) {
+  const max = Math.max(...themes.map((t) => t.share), 1);
   return (
     <section className="md-card">
-      <div className="md-h" style={{ marginBottom: 10 }}><span className="label">Your day, hour by hour</span><span className="tiny"><i className="sw track" /> scheduled <i className="sw fill" /> you were there</span></div>
-      <div className="md-tl">
-        {rows.map((n) => {
-          const s0 = +new Date(n.session.startAt), s1 = +new Date(n.session.endAt);
-          const wins = n.windows.length ? n.windows.map((w) => [+new Date(w.from), +new Date(w.to)]) : n.unlocked ? [[s0, s1]] : [];
-          return (
-            <div key={n.session.id} className="md-tl-row">
-              <div className="md-tl-label" title={n.session.title}>{n.session.title}</div>
-              <div className="md-tl-track" title={`${n.session.title} · ${timeHM(n.session.startAt)}–${timeHM(n.session.endAt)} · ${n.minutes} min in the room`}>
-                <i className="sched" style={{ left: `${x(s0)}%`, width: `${Math.max(1.5, x(s1) - x(s0))}%` }} />
-                {wins.map(([a, b], i) => <i key={i} className={`was ${n.windows.length ? "" : "scan"}`} style={{ left: `${x(a)}%`, width: `${Math.max(1.2, x(Math.max(b, a + 120_000)) - x(a))}%` }} />)}
-              </div>
-            </div>
-          );
-        })}
-        <div className="md-tl-axis">{hours.map((h) => <span key={h} style={{ left: `${x(h)}%` }}>{new Date(h).toLocaleTimeString("en-IN", { hour: "2-digit", hour12: false, timeZone: "Asia/Kolkata" }).replace(/^(\d+).*/, "$1h")}</span>)}</div>
+      <div className="md-h"><span className="label">What the day was about</span><span className="tiny">share of talk time</span></div>
+      <div className="md-themes">
+        {themes.map((t, i) => (
+          <div key={i} className="md-theme">
+            <div className="row between" style={{ gap: 10 }}><b>{t.name}</b><span className="pct">{t.share}%</span></div>
+            <div className="md-bar" style={{ height: 10, marginTop: 6 }}><i style={{ width: `${Math.max(4, Math.round((t.share / max) * 100))}%` }} /></div>
+            <p>{t.gist}<span className="tiny"> · {t.session}</span></p>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -178,6 +176,18 @@ function NoteCard({ n }: { n: Note }) {
             <div className="md-headline">{n.summary.headline}</div>
             <ol className="md-moments">{n.summary.points.map((p, i) => <li key={i}><span className="t">{p.t}</span><span className="dot" /><span className="txt">{p.point}</span></li>)}</ol>
             {n.summary.numbers.length > 0 && <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>{n.summary.numbers.map((x, i) => <span key={i} className="chip tint" style={{ letterSpacing: 0, textTransform: "none" }}>{x}</span>)}</div>}
+            {n.insights && n.insights.claims.length > 0 && (
+              <div className="md-claims">
+                <div className="md-h" style={{ marginBottom: 6 }}><span className="label">Said on stage · on the deck?</span></div>
+                {n.insights.claims.map((c, i) => (
+                  <div key={i} className="md-claim">
+                    <span className="t">{c.t}</span>
+                    <span className="txt">{c.claim}</span>
+                    {c.slide ? <Link href={`/session/${n.session.id}`} className="chip green" style={{ letterSpacing: 0, textTransform: "none" }}>Slide {c.slide}</Link> : <span className="chip grey" style={{ letterSpacing: 0, textTransform: "none" }}>Not on the deck</span>}
+                  </div>
+                ))}
+              </div>
+            )}
           </>
         ) : <p className="small" style={{ fontSize: 14, margin: 0 }}>{n.segmentsHeard ? "Lekhak is writing this up — check back in a moment." : n.session.status === "live" ? "You're in the room. Notes appear as the talk goes on." : "No transcript was captured for this session yet."}</p>}
         <div className="row no-print" style={{ gap: 8, paddingTop: 4 }}><Link href={`/session/${n.session.id}`} className="pill">Open session</Link><Link href={`/ask?session=${n.session.id}`} className="pill on"><Spark size={12} style={{ verticalAlign: -2, marginRight: 4 }} />Ask Lekhak</Link></div>
@@ -187,6 +197,12 @@ function NoteCard({ n }: { n: Note }) {
 }
 
 /* ---------------- helpers ---------------- */
+function mergeThemes(notes: Note[]) {
+  const out: { name: string; share: number; gist: string; session: string }[] = [];
+  const withThemes = notes.filter((n) => n.insights?.themes.length);
+  for (const n of withThemes) for (const t of n.insights!.themes) out.push({ ...t, share: Math.round(t.share / withThemes.length), session: n.session.title });
+  return out.sort((a, b) => b.share - a.share).slice(0, 6);
+}
 function trunc(s: string, n: number) { return s.length > n ? s.slice(0, n - 1) + "…" : s; }
 function pickFigures(notes: Note[]) {
   const out: { big: string; caption: string; session: string }[] = [];
