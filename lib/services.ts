@@ -127,7 +127,7 @@ export async function buildChatContext(opts: { attendeeId: ObjectId; question: s
 }
 
 /* ---------------- My day ---------------- */
-export async function myDay(attendeeId: ObjectId) {
+export async function myDay(attendeeId: ObjectId, opts: { generate?: boolean } = { generate: true }) {
   const [sessions, presence, unlocks, chats, existing] = await Promise.all([
     listSessions(),
     (await C.presence()).find({ attendeeId }).toArray(),
@@ -145,10 +145,10 @@ export async function myDay(attendeeId: ObjectId) {
     const unlocked = unlocks.some((u) => u.sessionId.equals(s._id));
     if (wins.length || unlocked) attended.push({ session: s, minutes, windows: wins, unlocked });
   }
-  const notes: { session: ReturnType<typeof publicSession>; minutes: number; unlocked: boolean; summary: SummaryDoc | null; segmentsHeard: number }[] = [];
+  const notes: { session: ReturnType<typeof publicSession>; minutes: number; unlocked: boolean; summary: SummaryDoc | null; segmentsHeard: number; windows: { from: Date; to: Date }[]; totalSegments: number }[] = [];
   for (const a of attended) {
     const s = a.session;
-    if (!s.liveStartedAt || !(s.lastSeq > 0)) { notes.push({ session: publicSession(s), minutes: a.minutes, unlocked: a.unlocked, summary: byId.get(s._id.toString()) || null, segmentsHeard: 0 }); continue; }
+    if (!s.liveStartedAt || !(s.lastSeq > 0)) { notes.push({ session: publicSession(s), minutes: a.minutes, unlocked: a.unlocked, summary: byId.get(s._id.toString()) || null, segmentsHeard: 0, windows: a.windows, totalSegments: 0 }); continue; }
     // Segments the attendee was in the room for (±2 min slack). If they unlocked by scanning, give them the whole talk.
     const all = await seg.find({ sessionId: s._id }).sort({ seq: 1 }).toArray();
     const start = s.liveStartedAt.getTime();
@@ -162,7 +162,7 @@ export async function myDay(attendeeId: ObjectId) {
     const recent = prev && Date.now() - prev.createdAt.getTime() < 45_000;
     let summary = prev;
     const heardChars = heard.reduce((n, g) => n + g.text.length, 0);
-    if (heard.length >= 1 && heardChars >= 160 && stale && !recent) {
+    if (opts.generate !== false && heard.length >= 1 && heardChars >= 160 && stale && !recent) {
       try {
         const out = await summarise({ title: s.title, speaker: s.speaker || "", lines: heard.map((g) => ({ t: fmtOffset(g.offsetMs), text: g.text })), attendeeId: attendeeId.toString(), sessionId: s._id.toString() });
         const doc: SummaryDoc = { _id: prev?._id || new ObjectId(), attendeeId, sessionId: s._id, upToSeq: latestSeq, headline: out.headline, points: out.points, numbers: out.numbers, createdAt: new Date() };
@@ -170,7 +170,7 @@ export async function myDay(attendeeId: ObjectId) {
         summary = doc;
       } catch (e) { console.error("summarise failed", e); }
     }
-    notes.push({ session: publicSession(s), minutes: a.minutes, unlocked: a.unlocked, summary, segmentsHeard: heard.length });
+    notes.push({ session: publicSession(s), minutes: a.minutes, unlocked: a.unlocked, summary, segmentsHeard: heard.length, windows: a.windows, totalSegments: all.length });
   }
   notes.sort((x, y) => new Date(x.session.startAt).getTime() - new Date(y.session.startAt).getTime());
   const withSummary = notes.filter((n) => n.summary);
@@ -180,6 +180,7 @@ export async function myDay(attendeeId: ObjectId) {
     const digests = await col<{ _id: ObjectId; attendeeId: ObjectId; signature: string; text: string }>("digests");
     const cached = await digests.findOne({ attendeeId });
     if (cached && cached.signature === signature) lines = cached.text;
+    else if (opts.generate === false) lines = cached?.text || "";
     else {
       try {
         lines = await threeLines({ notes: withSummary.map((n) => ({ title: n.session.title, headline: n.summary!.headline, points: n.summary!.points.map((p) => p.point) })), attendeeId: attendeeId.toString() });

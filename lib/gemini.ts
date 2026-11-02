@@ -190,7 +190,7 @@ TRANSCRIPT:\n${opts.lines.map((l) => `[${l.t}] ${l.text}`).join("\n")}`;
 export async function threeLines(opts: { notes: { title: string; headline: string; points: string[] }[]; attendeeId?: string }): Promise<string> {
   if (!opts.notes.length) return "";
   const prompt = `Combine these session notes from one investor's day into exactly three plain sentences (no bullets, no headers) that they could repeat to a colleague tonight. Be concrete, keep figures.\n\n${opts.notes.map((n) => `${n.title}: ${n.headline}\n- ${n.points.join("\n- ")}`).join("\n\n")}`;
-  const r = await ai().models.generateContent({ model: CHAT_MODEL, contents: prompt, config: { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, temperature: 0.3, maxOutputTokens: 400 } });
+  const r = await ai().models.generateContent({ model: CHAT_MODEL, contents: prompt, config: { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, temperature: 0.3, maxOutputTokens: 2048 } });
   await logUsage({ kind: "summary", model: CHAT_MODEL, usage: r.usageMetadata, attendeeId: opts.attendeeId });
   return (r.text || "").trim();
 }
