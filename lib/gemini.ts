@@ -1,0 +1,192 @@
+import { GoogleGenAI, Modality, ThinkingLevel, AudioTranscriptionConfigMode, EndSensitivity, StartSensitivity, type Content } from "@google/genai";
+import { ObjectId } from "mongodb";
+import { C } from "./db";
+import { chatCost, embedCost, getPricing, liveCost } from "./pricing";
+import type { UsageKind } from "./types";
+
+export const CHAT_MODEL = process.env.GEMINI_CHAT_MODEL || "gemini-3.8-flash";
+export const LIVE_MODEL = process.env.GEMINI_LIVE_TRANSCRIBE_MODEL || "gemini-3.5-transcribe-live";
+export const EMBED_MODEL = process.env.GEMINI_EMBED_MODEL || "gemini-embedding-2";
+export const EMBED_DIMS = 768;
+/** Finalise a little sooner at natural pauses so attendees get frequent, timestamped lines. */
+export const LIVE_VAD = { automaticActivityDetection: { disabled: false, silenceDurationMs: 600, endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_HIGH, startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_HIGH } };
+
+let client: GoogleGenAI | null = null;
+export function ai(): GoogleGenAI {
+  if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set");
+  if (!client) client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  return client;
+}
+
+type UsageMeta = { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number; totalTokenCount?: number } | undefined;
+
+export async function logUsage(opts: {
+  kind: UsageKind; model: string; usage?: UsageMeta; audioSeconds?: number;
+  attendeeId?: string | ObjectId | null; sessionId?: string | ObjectId | null;
+}) {
+  const p = await getPricing();
+  const promptTokens = opts.usage?.promptTokenCount || 0;
+  const outputTokens = (opts.usage?.candidatesTokenCount || 0) + (opts.usage?.thoughtsTokenCount || 0);
+  const audioSeconds = opts.audioSeconds || 0;
+  let costUsd = 0;
+  if (opts.kind === "live") costUsd = liveCost(p, audioSeconds);
+  else if (opts.kind === "embed") costUsd = embedCost(p, promptTokens);
+  else costUsd = chatCost(p, promptTokens, outputTokens);
+  const u = await C.usage();
+  await u.insertOne({
+    _id: new ObjectId(), kind: opts.kind, model: opts.model, promptTokens, outputTokens, audioSeconds, costUsd,
+    attendeeId: opts.attendeeId ? new ObjectId(opts.attendeeId) : null,
+    sessionId: opts.sessionId ? new ObjectId(opts.sessionId) : null,
+    createdAt: new Date(),
+  });
+  return costUsd;
+}
+
+/* ---------------- embeddings ---------------- */
+export async function embed(texts: string[], ctx: { attendeeId?: string | null; sessionId?: string | null } = {}): Promise<number[][]> {
+  if (!texts.length) return [];
+  const out: number[][] = [];
+  // batch in groups of 50
+  for (let i = 0; i < texts.length; i += 50) {
+    const batch = texts.slice(i, i + 50).map((t) => t.slice(0, 6000));
+    const r = await ai().models.embedContent({ model: EMBED_MODEL, contents: batch.map((t) => ({ parts: [{ text: t }] })), config: { outputDimensionality: EMBED_DIMS } });
+    if ((r.embeddings || []).length !== batch.length) throw new Error(`Embedding count mismatch: ${(r.embeddings || []).length} for ${batch.length} inputs`);
+    for (const e of r.embeddings || []) out.push(e.values || []);
+    // embedContent does not return usage; estimate 1 token ≈ 4 chars
+    const approxTokens = Math.ceil(batch.reduce((n, t) => n + t.length, 0) / 4);
+    await logUsage({ kind: "embed", model: EMBED_MODEL, usage: { promptTokenCount: approxTokens }, ...ctx });
+  }
+  return out;
+}
+
+/* ---------------- ephemeral token for browser Live sessions ---------------- */
+export async function createLiveToken(opts: { customVocabulary?: string[]; mode?: "SMART" | "VERBATIM" } = {}) {
+  const token = await ai().authTokens.create({
+    config: {
+      uses: 1,
+      expireTime: new Date(Date.now() + 30 * 60_000).toISOString(),
+      newSessionExpireTime: new Date(Date.now() + 2 * 60_000).toISOString(),
+      liveConnectConstraints: {
+        model: LIVE_MODEL,
+        config: {
+          responseModalities: [Modality.TEXT],
+          inputAudioTranscription: { languageCodes: [], mode: (opts.mode || "SMART") as AudioTranscriptionConfigMode, ...(opts.customVocabulary?.length ? { customVocabulary: opts.customVocabulary.slice(0, 100) } : {}) },
+          realtimeInputConfig: LIVE_VAD,
+        },
+      },
+    },
+  });
+  return { token: token.name!, model: LIVE_MODEL, mode: (opts.mode || "SMART") as AudioTranscriptionConfigMode, customVocabulary: opts.customVocabulary || [] };
+}
+
+/* ---------------- document extraction ---------------- */
+export interface ExtractedPage { page: number; title: string; text: string; numbers: string[] }
+
+export async function extractPdfPages(pdf: Buffer, ctx: { sessionId?: string | null } = {}): Promise<ExtractedPage[]> {
+  const prompt = `You are indexing a presentation deck for an investor-day Q&A assistant. For EVERY page/slide in this PDF, return one JSON object. Capture the slide title, ALL visible text (bullets, labels, footnotes, table cells), and describe any chart or diagram in words with the numbers it shows. List every figure, percentage, currency amount, or date separately in "numbers" (as short strings with units, e.g. "38% YoY gold loan growth"). Keep the original language of the slide. Return ONLY a JSON array in page order: [{"page":1,"title":"...","text":"...","numbers":["..."]}, ...]. Never skip a page; if a page is blank, return an empty text.`;
+  const r = await ai().models.generateContent({
+    model: CHAT_MODEL,
+    contents: [{ role: "user", parts: [{ inlineData: { mimeType: "application/pdf", data: pdf.toString("base64") } }, { text: prompt }] }],
+    config: { responseMimeType: "application/json", thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, maxOutputTokens: 60000 },
+  });
+  await logUsage({ kind: "extract", model: CHAT_MODEL, usage: r.usageMetadata, sessionId: ctx.sessionId });
+  const parsed = safeJson<ExtractedPage[]>(r.text || "[]") || [];
+  return parsed.filter((p) => p && typeof p.page === "number").map((p) => ({
+    page: p.page, title: String(p.title || "").slice(0, 200), text: String(p.text || "").slice(0, 8000),
+    numbers: Array.isArray(p.numbers) ? p.numbers.map(String).slice(0, 40) : [],
+  }));
+}
+
+export function safeJson<T>(s: string): T | null {
+  try { return JSON.parse(s) as T; } catch { /* fallthrough */ }
+  const m = s.match(/[\[{][\s\S]*[\]}]/);
+  if (m) { try { return JSON.parse(m[0]) as T; } catch { return null; } }
+  return null;
+}
+
+/* ---------------- chat ---------------- */
+export const SOURCES_MARK = "<<<SOURCES>>>";
+
+export interface TalkContext { sessionId: string; title: string; speaker: string; live: boolean; nowOffset: string; lines: { t: string; text: string }[] }
+export interface DeckContext { documentId: string; documentName: string; sessionId: string; sessionTitle: string; page: number; title: string; text: string; numbers: string[] }
+
+export function buildSystemPrompt(eventName: string) {
+  return `You are Lekhak (लेखक), the AI note-taker inside the ${eventName} companion app. You have listened to every session the investor attended and you have read the decks the speakers presented. You answer investors' questions precisely, warmly and briefly.
+
+LANGUAGE: Detect the language and script of the investor's question and reply in exactly that language and script. Hindi in Devanagari → reply in Devanagari Hindi. Hinglish (Hindi in Latin letters) → reply in Hinglish. Tamil, Telugu, Kannada, Malayalam, Marathi, Gujarati, Bengali, Punjabi, Odia → reply in that language. English → English. Quotes from the talk may stay in their original language.
+
+TWO KINDS OF SOURCES — keep them clearly separate in your answer:
+1. THE TALK — the live transcript of what the speaker actually said, with timestamps (mm:ss into the session). Use it for "what did he say", "what did Jairam mention about X", "what was said 2 minutes ago", "how did he explain Y". Quote the speaker's words where useful and name the timestamp.
+2. THE DECK — slides the speaker presented. If a slide covers the topic, add the slide's facts and say they come from the deck (e.g. "The deck adds (slide 14): …"). Never attribute a deck figure to the speaker's mouth unless the transcript also contains it.
+
+RULES:
+- Answer first (one to three short sentences), then detail. Use plain sentences, no headers; short markdown bullets are fine for lists.
+- Relative-time questions ("just now", "2 minutes back", "कुछ देर पहले") are relative to the current offset given in the context of the LIVE session.
+- If the transcript does not cover something, say so plainly and say whether the deck covers it. Never invent figures. Do not use outside knowledge about the company; stay inside the talk and the deck.
+- The transcript is machine-generated speech-to-text and may contain small errors; interpret it sensibly (e.g. "how I shows up" means "how AI shows up").
+- Keep answers under 140 words unless the investor asks for detail.
+
+OUTPUT FORMAT (strict): write the answer, then on a new line write ${SOURCES_MARK} followed by a single JSON object:
+{"talk":[{"sessionId":"…","t":"mm:ss","quote":"exact or near-exact words from the transcript"}],"deck":[{"documentId":"…","page":14,"title":"slide title","excerpt":"the relevant slide text"}]}
+Include at most 3 talk quotes and 3 deck references, only ones you actually used. If none, use empty arrays. Always include the ${SOURCES_MARK} line.`;
+}
+
+export function buildContextBlock(talks: TalkContext[], decks: DeckContext[]): string {
+  const parts: string[] = [];
+  for (const t of talks) {
+    parts.push(`### TALK — ${t.title} (${t.speaker})${t.live ? ` — LIVE NOW, current offset ${t.nowOffset}` : " — ended"}\nsessionId: ${t.sessionId}`);
+    if (!t.lines.length) parts.push("(no transcript yet)");
+    else parts.push(t.lines.map((l) => `[${l.t}] ${l.text}`).join("\n"));
+  }
+  if (decks.length) {
+    parts.push("### DECK SLIDES (retrieved as relevant)");
+    for (const d of decks) {
+      parts.push(`documentId: ${d.documentId} · ${d.documentName} · session: ${d.sessionTitle} · slide ${d.page}: ${d.title}\n${d.text}${d.numbers.length ? `\nFigures: ${d.numbers.join("; ")}` : ""}`);
+    }
+  } else parts.push("### DECK SLIDES\n(no deck has been uploaded for these sessions yet)");
+  return parts.join("\n\n");
+}
+
+export async function* streamChat(opts: {
+  eventName: string; context: string; history: { role: "user" | "assistant"; text: string }[]; question: string;
+}): AsyncGenerator<{ text?: string; usage?: UsageMeta }> {
+  const contents: Content[] = [];
+  for (const h of opts.history.slice(-8)) contents.push({ role: h.role === "user" ? "user" : "model", parts: [{ text: h.text }] });
+  contents.push({ role: "user", parts: [{ text: `CONTEXT (what you heard and read):\n\n${opts.context}\n\n---\nINVESTOR'S QUESTION: ${opts.question}` }] });
+  const stream = await ai().models.generateContentStream({
+    model: CHAT_MODEL,
+    contents,
+    config: { systemInstruction: buildSystemPrompt(opts.eventName), thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, temperature: 0.4, maxOutputTokens: 2048 },
+  });
+  for await (const chunk of stream) {
+    if (chunk.text) yield { text: chunk.text };
+    if (chunk.usageMetadata) yield { usage: chunk.usageMetadata };
+  }
+}
+
+/* ---------------- summaries for "My day" ---------------- */
+export interface SummaryOut { headline: string; points: { t: string; point: string }[]; numbers: string[] }
+export async function summarise(opts: { title: string; speaker: string; lines: { t: string; text: string }[]; attendeeId?: string; sessionId?: string }): Promise<SummaryOut> {
+  const prompt = `You are Lekhak, an AI note-taker at an investor day. Below is the live transcript of the part of "${opts.title}" (${opts.speaker}) that one investor was in the room for. Write their notes in English:
+- "headline": one sentence (max 18 words) capturing the single most important message.
+- "points": 3 to 7 key moments, each {"t":"mm:ss","point":"one crisp sentence"} using the timestamp where it was said.
+- "numbers": up to 6 figures that were spoken, as short strings with context.
+Return ONLY JSON: {"headline":"…","points":[…],"numbers":[…]}.
+
+TRANSCRIPT:\n${opts.lines.map((l) => `[${l.t}] ${l.text}`).join("\n")}`;
+  const r = await ai().models.generateContent({
+    model: CHAT_MODEL, contents: prompt,
+    config: { responseMimeType: "application/json", thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, temperature: 0.3 },
+  });
+  await logUsage({ kind: "summary", model: CHAT_MODEL, usage: r.usageMetadata, attendeeId: opts.attendeeId, sessionId: opts.sessionId });
+  const j = safeJson<SummaryOut>(r.text || "") || { headline: "", points: [], numbers: [] };
+  return { headline: String(j.headline || ""), points: Array.isArray(j.points) ? j.points.slice(0, 8) : [], numbers: Array.isArray(j.numbers) ? j.numbers.map(String).slice(0, 6) : [] };
+}
+
+export async function threeLines(opts: { notes: { title: string; headline: string; points: string[] }[]; attendeeId?: string }): Promise<string> {
+  if (!opts.notes.length) return "";
+  const prompt = `Combine these session notes from one investor's day into exactly three plain sentences (no bullets, no headers) that they could repeat to a colleague tonight. Be concrete, keep figures.\n\n${opts.notes.map((n) => `${n.title}: ${n.headline}\n- ${n.points.join("\n- ")}`).join("\n\n")}`;
+  const r = await ai().models.generateContent({ model: CHAT_MODEL, contents: prompt, config: { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, temperature: 0.3, maxOutputTokens: 400 } });
+  await logUsage({ kind: "summary", model: CHAT_MODEL, usage: r.usageMetadata, attendeeId: opts.attendeeId });
+  return (r.text || "").trim();
+}

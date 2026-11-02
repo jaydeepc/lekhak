@@ -1,0 +1,10 @@
+node_modules
+.next
+.vercel
+.env*
+!.env.example
+*.log
+.DS_Store
+mocks-investor-day-app
+scratch
+.local-domain
