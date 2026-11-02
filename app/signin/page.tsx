@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { App, Hero, Spinner } from "@/components/ui";
 import { Scan } from "@/components/icons";
-import { api } from "@/components/api";
+import { api, invalidateAccess } from "@/components/api";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -13,7 +13,7 @@ export default function SignIn() {
   const router = useRouter();
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setErr(null); setBusy(true);
-    try { await api("/api/auth/signin", { method: "POST", json: { email } }); router.push("/home"); }
+    try { await api("/api/auth/signin", { method: "POST", json: { email } }); invalidateAccess(); router.push("/home"); }
     catch (x) { setErr(x instanceof Error ? x.message : "Could not sign in"); setBusy(false); }
   };
   return (

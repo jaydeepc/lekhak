@@ -17,7 +17,7 @@ export default function MyDay() {
     let on = true;
     const load = () => api<Day>("/api/myday").then((r) => { if (on) setD(r); }).catch((e) => setErr(e.message));
     load();
-    const t = setInterval(() => { if (document.visibilityState === "visible") load(); }, 45000);
+    const t = setInterval(() => { if (document.visibilityState === "visible") load(); }, 90000);
     return () => { on = false; clearInterval(t); };
   }, [me]);
   const first = me?.name?.split(" ")[0] || "Investor";

@@ -10,7 +10,7 @@ import { useRequireMe } from "@/components/guard";
 export default function LivePage() {
   const me = useRequireMe();
   const { id } = useParams<{ id: string }>();
-  const { data } = useSessions(15000);
+  const { data } = useSessions(5000);
   const s = data?.sessions.find((x) => x.id === id);
   const { segments, interim, state, connected } = useLiveTranscript(id);
   const isLive = (state?.status || s?.status) === "live";

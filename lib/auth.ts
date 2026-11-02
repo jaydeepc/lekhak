@@ -41,3 +41,22 @@ export function cookieOpts(maxAge: number) {
 
 export const ATTENDEE_TTL = 60 * 60 * 24 * 30; // 30 days
 export const ADMIN_TTL = 60 * 60 * 12; // 12 hours
+
+/** HMAC-signed, expiring access token for one document (lets an external viewer fetch the file without a cookie). */
+export async function signFileAccess(documentId: string, ttlSeconds = 6 * 3600): Promise<string> {
+  // Expiry snaps to the next bucket boundary so every attendee gets the same URL (one CDN cache entry per deck).
+  const exp = (Math.floor(Date.now() / 1000 / ttlSeconds) + 2) * ttlSeconds;
+  const data = new TextEncoder().encode(`${documentId}.${exp}`);
+  const key = await crypto.subtle.importKey("raw", secret, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = Buffer.from(await crypto.subtle.sign("HMAC", key, data)).toString("base64url");
+  return `${exp}.${mac}`;
+}
+export async function verifyFileAccess(documentId: string, sig: string | null): Promise<boolean> {
+  if (!sig) return false;
+  const [expStr, mac] = sig.split(".");
+  const exp = parseInt(expStr, 10);
+  if (!exp || !mac || exp < Math.floor(Date.now() / 1000)) return false;
+  const data = new TextEncoder().encode(`${documentId}.${exp}`);
+  const key = await crypto.subtle.importKey("raw", secret, { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+  return crypto.subtle.verify("HMAC", key, Buffer.from(mac, "base64url"), data);
+}

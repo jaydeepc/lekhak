@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { C } from "./db";
+import { C, col } from "./db";
 import type { SessionDoc, SegmentDoc, SummaryDoc } from "./types";
 import { fmtOffset, cosine } from "./text";
 import { embed, summarise, threeLines, type DeckContext, type TalkContext } from "./gemini";
@@ -15,6 +15,7 @@ export function publicSession(s: SessionDoc) {
     speaker: s.speaker || "", speakerTitle: s.speakerTitle || "", room: s.room, kind: s.kind,
     startAt: s.startAt, endAt: s.endAt, image: s.image, alwaysOpen: s.alwaysOpen, status: s.status,
     liveStartedAt: s.liveStartedAt || null, liveEndedAt: s.liveEndedAt || null, lastSeq: s.lastSeq || 0, order: s.order,
+    updatedAt: s.updatedAt,
   };
 }
 export type PublicSession = ReturnType<typeof publicSession>;
@@ -41,11 +42,9 @@ export async function accessibleSessionIds(attendeeId: ObjectId): Promise<Set<st
 export async function heartbeat(attendeeId: ObjectId, sessionId: ObjectId) {
   const p = await C.presence();
   const now = new Date();
-  // extend the latest window if it ended < 90s ago, else start a new one
-  const last = await p.findOne({ attendeeId, sessionId }, { sort: { to: -1 } });
-  if (last && now.getTime() - last.to.getTime() < 90_000) await p.updateOne({ _id: last._id }, { $set: { to: now } });
-  else await p.insertOne({ _id: new ObjectId(), attendeeId, sessionId, from: now, to: now });
-  await (await C.attendees()).updateOne({ _id: attendeeId }, { $set: { lastSeenAt: now } });
+  // Extend a window that ended < 2 min ago, else start a new one — a single upsert either way.
+  await p.updateOne({ attendeeId, sessionId, to: { $gte: new Date(now.getTime() - 120_000) } }, { $set: { to: now }, $setOnInsert: { _id: new ObjectId(), from: now } }, { upsert: true });
+  await (await C.attendees()).updateOne({ _id: attendeeId }, { $max: { lastSeenAt: now } });
 }
 
 export async function unlock(attendeeId: ObjectId, sessionId: ObjectId, via: "scan" | "code" | "live" | "admin") {
@@ -177,7 +176,16 @@ export async function myDay(attendeeId: ObjectId) {
   const withSummary = notes.filter((n) => n.summary);
   let lines = "";
   if (withSummary.length) {
-    try { lines = await threeLines({ notes: withSummary.map((n) => ({ title: n.session.title, headline: n.summary!.headline, points: n.summary!.points.map((p) => p.point) })), attendeeId: attendeeId.toString() }); } catch { /* ignore */ }
+    const signature = withSummary.map((n) => `${n.session.id}:${n.summary!.upToSeq}`).join("|");
+    const digests = await col<{ _id: ObjectId; attendeeId: ObjectId; signature: string; text: string }>("digests");
+    const cached = await digests.findOne({ attendeeId });
+    if (cached && cached.signature === signature) lines = cached.text;
+    else {
+      try {
+        lines = await threeLines({ notes: withSummary.map((n) => ({ title: n.session.title, headline: n.summary!.headline, points: n.summary!.points.map((p) => p.point) })), attendeeId: attendeeId.toString() });
+        await digests.updateOne({ attendeeId }, { $set: { signature, text: lines }, $setOnInsert: { _id: new ObjectId(), attendeeId } }, { upsert: true });
+      } catch { lines = cached?.text || ""; }
+    }
   }
   return {
     notes,

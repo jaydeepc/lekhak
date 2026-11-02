@@ -15,7 +15,7 @@ declare global {
 
 function getClientPromise(): Promise<MongoClient> {
   if (!global.__lekhakMongo) {
-    const client = new MongoClient(uri!, { maxPoolSize: 10, serverSelectionTimeoutMS: 8000 });
+    const client = new MongoClient(uri!, { maxPoolSize: 5, minPoolSize: 0, maxIdleTimeMS: 30_000, serverSelectionTimeoutMS: 8000, compressors: ["zstd", "snappy", "zlib"] });
     global.__lekhakMongo = { client, promise: client.connect() };
   }
   return global.__lekhakMongo.promise;

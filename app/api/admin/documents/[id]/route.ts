@@ -13,5 +13,6 @@ export const DELETE = handle(async (req, ctx) => {
   for await (const f of b.find({ "metadata.documentId": d._id })) await b.delete(f._id).catch(() => {});
   await (await C.chunks()).deleteMany({ documentId: d._id });
   await docs.deleteOne({ _id: d._id });
+  await (await C.sessions()).updateOne({ _id: d.sessionId }, { $set: { updatedAt: new Date() } });
   return json({ ok: true });
 });

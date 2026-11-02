@@ -46,3 +46,9 @@ export function clampText(s: string, max: number): string {
 export function timeHM(d: Date | string, tz = "Asia/Kolkata"): string {
   return new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz });
 }
+
+/** Public origin for links that must work from outside (QR codes, external viewers). */
+export function appOrigin(fallback: string): string {
+  const env = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
+  return env && !/localhost|127\.0\.0\.1/.test(fallback) ? env : fallback;
+}

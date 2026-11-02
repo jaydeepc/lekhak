@@ -57,6 +57,7 @@ export const POST = handle(async (req, ctx) => {
     await col.deleteMany({ documentId: d._id });
     await col.insertMany(pages.map((p, i) => ({ _id: new ObjectId(), documentId: d._id, sessionId: d.sessionId, page: p.page, title: p.title || `Slide ${p.page}`, text: p.text, numbers: p.numbers, embedding: vectors[i] || [] })));
     await docs.updateOne({ _id: d._id }, { $set: { status: "ready", pages: pages.length, chunkCount: pages.length, processedAt: new Date() } });
+    await (await C.sessions()).updateOne({ _id: d.sessionId }, { $set: { updatedAt: new Date() } });
     return json({ ok: true, pages: pages.length });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Processing failed";

@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { App } from "@/components/ui";
 import { Unlock } from "@/components/icons";
-import { api, useSessions, type Session } from "@/components/api";
+import { api, invalidateAccess, useSessions, type Session } from "@/components/api";
 import { useRequireMe } from "@/components/guard";
 
 function UnlockInner() {
@@ -16,7 +16,7 @@ function UnlockInner() {
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => {
     if (!me) return;
-    api<{ fresh: boolean; session: Session }>("/api/unlock", { method: "POST", json: { sessionId: id, code } }).then((r) => { setState(r); refresh(); }).catch((e) => setErr(e.message));
+    api<{ fresh: boolean; session: Session }>("/api/unlock", { method: "POST", json: { sessionId: id, code } }).then((r) => { setState(r); invalidateAccess(); refresh(); }).catch((e) => setErr(e.message));
   }, [me, id, code, refresh]);
   const talks = (data?.sessions || []).filter((s) => s.kind !== "break");
   const open = talks.filter((s) => s.open).length;

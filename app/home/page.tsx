@@ -8,7 +8,7 @@ import { useRequireMe } from "@/components/guard";
 
 export default function HomePage() {
   const me = useRequireMe();
-  const { data } = useSessions(8000);
+  const { data } = useSessions(5000);
   const sessions = data?.sessions || [];
   const live = sessions.filter((s) => s.status === "live" || s.status === "paused");
   const now = Date.now();

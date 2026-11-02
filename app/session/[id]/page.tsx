@@ -14,14 +14,16 @@ type Doc = DeckDoc;
 export default function SessionPage() {
   const me = useRequireMe();
   const { id } = useParams<{ id: string }>();
-  const { data } = useSessions(15000);
+  const { data } = useSessions(5000);
   const s = data?.sessions.find((x) => x.id === id);
   const toast = useToast();
   const [tab, setTab] = useState<"about" | "deck" | "transcript">("about");
   const [docs, setDocs] = useState<Doc[] | null>(null);
   const [segs, setSegs] = useState<Segment[] | null>(null);
-  useEffect(() => { if (!s?.open) return; api<{ documents: Doc[] }>(`/api/sessions/${id}/documents`).then((r) => setDocs(r.documents)).catch(() => setDocs([])); }, [id, s?.open]);
-  useEffect(() => { if (tab !== "transcript" || !s?.open) return; api<{ segments: Segment[] }>(`/api/sessions/${id}/segments?after=0`).then((r) => setSegs(r.segments)).catch(() => setSegs([])); }, [tab, id, s?.open]);
+  const deckVersion = s?.deckVersion || 0;
+  useEffect(() => { if (!s?.open) return; api<{ documents: Doc[] }>(`/api/sessions/${id}/documents?v=${deckVersion}`).then((r) => setDocs(r.documents)).catch(() => setDocs([])); }, [id, s?.open, deckVersion]);
+  const lastSeq = s?.lastSeq || 0;
+  useEffect(() => { if (tab !== "transcript" || !s?.open) return; api<{ segments: Segment[] }>(`/api/sessions/${id}/feed?after=0`).then((r) => setSegs(r.segments)).catch(() => setSegs([])); }, [tab, id, s?.open, lastSeq]);
   if (!s) {
     if (!data) return <App><div className="screen"><div className="skel" style={{ height: 280 }} /></div></App>;
     return <App><div className="screen pad" style={{ justifyContent: "center", gap: 16, textAlign: "center" }}><div className="orb quiet" /><h2>This session isn&apos;t on the agenda any more.</h2><p className="lead">It may have been removed or renamed by the host.</p><Link className="btn" href="/home">Back to the agenda</Link></div></App>;

@@ -268,3 +268,9 @@ textarea.input{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
 .deck-full-inner{width:100%;max-width:960px;max-height:100%;overflow:auto}
 .deck-full-inner .pdf-canvas,.deck-full-inner .text-slide{border-radius:var(--r);background:#fff}
 .deck-full-inner .btn.ghost{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.3)}
+.pptx-host{width:100%}
+.pptx-render{width:100%}
+.pptx-render.pending{height:0;overflow:hidden}
+.pptx-render .pptx-preview-wrapper{width:100%!important;height:auto!important;max-height:none!important;overflow:visible!important;background:transparent!important;display:flex;flex-direction:column;gap:14px}
+.pptx-render .pptx-preview-slide-wrapper{width:100%!important;flex-shrink:0;border-radius:8px;overflow:hidden;box-shadow:0 6px 18px rgba(29,53,74,.14);background:#fff}
+.pptx-render .pptx-preview-slide-wrapper *{box-sizing:content-box}

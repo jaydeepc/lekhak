@@ -30,7 +30,7 @@ function AskInner() {
   const router = useRouter();
   const sessionId = params.get("session");
   const preset = params.get("q");
-  const { data } = useSessions(0);
+  const { data } = useSessions(10000);
   const toast = useToast();
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [q, setQ] = useState("");
