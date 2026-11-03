@@ -32,7 +32,7 @@ export default function LivePage() {
   return (
     <App dark>
       <div className="screen">
-        <div className="pad safe-top row between" style={{ paddingTop: "max(24px,env(safe-area-inset-top))" }}>
+        <div className="pad safe-top row between" style={{ paddingTop: 18 }}>
           <Link className="icon-btn" href="/home" aria-label="Back"><Back /></Link>
           <span className="chip glass" style={{ background: "rgba(255,255,255,.1)" }}>
             {status === "live" ? <><span className="dot live-dot" />Live · {clock}</> : status === "paused" ? <>Paused · {clock}</> : status === "ended" ? <>Ended · {clock}</> : <>Starts soon</>}

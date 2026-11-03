@@ -18,11 +18,11 @@ export const useToast = () => useContext(ToastCtx);
 
 /* ---------- shell ---------- */
 export function App({ children, dark, wide }: { children: ReactNode; dark?: boolean; wide?: boolean }) {
-  return <main className={`app ${dark ? "dark" : ""} ${wide ? "wide" : ""}`}>{children}{!wide && <NewChatFab />}</main>;
+  return <main className={`app ${dark ? "dark" : ""} ${wide ? "wide" : ""}`}>{!wide && <TopBar />}{children}</main>;
 }
 
-/** Floating "New chat": from any attendee screen, start a fresh conversation with Lekhak. */
-function NewChatFab() {
+/** Sticky app bar: the lockup and a "New chat" action, locked to the top of every attendee screen. */
+function TopBar() {
   const path = usePathname();
   const router = useRouter();
   const toast = useToast();
@@ -36,9 +36,12 @@ function NewChatFab() {
     finally { setBusy(false); }
   };
   return (
-    <button type="button" className="fab no-print" onClick={go} disabled={busy} aria-label="Start a new chat with Lekhak">
-      <span className="fab-ic"><Plus size={18} /><Spark size={16} /></span><span className="fab-lbl">New chat</span>
-    </button>
+    <div className="topbar no-print">
+      <Link href="/home" className="topbar-brand" aria-label="Home"><img src="/brand/piramal-ai-lockup.png" alt="Piramal.ai" /></Link>
+      <button type="button" className="fab" onClick={go} disabled={busy} aria-label="Start a new chat with Lekhak">
+        <span className="fab-ic"><Plus size={16} /><Spark size={14} /></span><span className="fab-lbl">New chat</span>
+      </button>
+    </div>
   );
 }
 

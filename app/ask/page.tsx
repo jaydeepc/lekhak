@@ -102,7 +102,7 @@ function AskInner() {
   return (
     <App>
       <div className="screen">
-        <div className="pad safe-top row" style={{ gap: 12, paddingTop: "max(24px,env(safe-area-inset-top))", paddingBottom: 14, borderBottom: "1px solid var(--line)" }}>
+        <div className="pad safe-top row" style={{ gap: 12, paddingTop: 18, paddingBottom: 14, borderBottom: "1px solid var(--line)" }}>
           <Link className="icon-btn" href={sessionId ? `/live/${sessionId}` : "/home"} aria-label="Back"><Back /></Link><div className="orb sm" />
           <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 17, fontWeight: 600 }}>Lekhak</div><div className="small" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{focus ? `Focused on ${focus.title}` : openTitles.length ? `Can answer from: ${openTitles.join(", ")}` : "Sign in to ask"}</div></div>
           {msgs.length > 0 && <button type="button" className="pill" style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }} onClick={newChat} disabled={busy} aria-label="Start a new chat"><Plus size={14} />New chat</button>}
