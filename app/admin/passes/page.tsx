@@ -17,7 +17,7 @@ function PassesInner() {
       <div className="passes">
         {list.map((a) => (
           <div key={a.id} className="pass">
-            <div className="ph"><div><div className="ev">{ev?.name || "Investor Day"}</div><div style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,.8)" }}>{ev?.date}{ev?.venue ? ` · ${ev.venue}` : ""}</div></div><div style={{ background: "#fff", borderRadius: 6, padding: "6px 8px" }}><Logo h={18} /></div></div>
+            <div className="ph"><div><div className="ev">{ev?.name || "Investor Day"}</div><div style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,.8)" }}>{ev?.date}{ev?.venue ? ` · ${ev.venue}` : ""}</div></div><Logo h={22} /></div>
             <div className="pb"><div><b>{a.name}</b><div className="firm">{a.firm}</div><div className="role">{a.role}</div></div><QR text={`${appUrl()}/pass/${a.passToken}`} size={256} /></div>
             <div className="pf"><span>Scan to open Lekhak</span><span>{appUrl().replace(/^https?:\/\//, "")}</span></div>
           </div>

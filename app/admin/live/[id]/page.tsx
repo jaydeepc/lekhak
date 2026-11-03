@@ -96,7 +96,7 @@ export default function Recorder() {
   return (
     <>
       <div className="adm-head">
-        <div><div className="row" style={{ gap: 10 }}><Link href="/admin/sessions" className="small" style={{ fontWeight: 800 }}>← Agenda</Link></div><h1>{s?.title || "…"}</h1><div className="sub">{s ? `${s.room}${s.speaker ? ` · ${s.speaker}` : ""} · ${timeHM(s.startAt)}–${timeHM(s.endAt)} · room code ${s.code}` : ""}</div></div>
+        <div><div className="row" style={{ gap: 10 }}><Link href="/admin/sessions" className="small" style={{ fontWeight: 600 }}>← Agenda</Link></div><h1>{s?.title || "…"}</h1><div className="sub">{s ? `${s.room}${s.speaker ? ` · ${s.speaker}` : ""} · ${timeHM(s.startAt)}–${timeHM(s.endAt)} · room code ${s.code}` : ""}</div></div>
         <div className="row" style={{ gap: 10 }}><span className={`status ${status}`} style={{ fontSize: 13, padding: "10px 14px" }}>{status === "live" && <span className="dot live-dot" />}{status} · {clock}</span></div>
       </div>
       <div className="rec">
@@ -114,9 +114,9 @@ export default function Recorder() {
             <div className="col" style={{ gap: 12 }}>
               <div className="field"><label>Microphone</label><select className="input" value={deviceId} onChange={(e) => setDeviceId(e.target.value)} disabled={Boolean(mic)}><option value="">Default microphone</option>{devices.map((d) => <option key={d.deviceId} value={d.deviceId}>{d.label || "Microphone"}</option>)}</select></div>
               <div className="meter"><i style={{ width: `${Math.min(100, level * 400)}%` }} /></div>
-              <div className="small" style={{ fontWeight: 700 }}>Gemini Live: {mic ? micStatus : "idle"}{mic ? ` · ${stats.interims} captions · ${stats.finals} lines · ${stats.saved} saved${stats.failed ? ` · ${stats.failed} failed` : ""}` : ""}</div>
+              <div className="small" style={{ fontWeight: 500 }}>Gemini Live: {mic ? micStatus : "idle"}{mic ? ` · ${stats.interims} captions · ${stats.finals} lines · ${stats.saved} saved${stats.failed ? ` · ${stats.failed} failed` : ""}` : ""}</div>
               {micError && <div className="err">{micError}</div>}
-              {mic && micStatus.startsWith("listening") && level < 0.002 && stats.interims === 0 && <div className="err" style={{ background: "#FFF4D6", color: "#8A5A00" }}>No sound is reaching the microphone. Check the input device above and the laptop's input volume.</div>}
+              {mic && micStatus.startsWith("listening") && level < 0.002 && stats.interims === 0 && <div className="err" style={{ background: "rgba(233,113,50,.14)", color: "var(--flame-light)" }}>No sound is reaching the microphone. Check the input device above and the laptop's input volume.</div>}
               {!mic ? <button className="btn bigbtn" disabled={busy} onClick={start}><Mic />{status === "live" ? "Resume listening" : status === "paused" ? "Resume session" : status === "ended" ? "Reopen & listen" : "Go live & start listening"}</button>
                 : <button className="btn bigbtn stop" onClick={stopMic}>Stop microphone (stay live)</button>}
               <div className="btn-row">
@@ -128,7 +128,7 @@ export default function Recorder() {
           </div>
           <div className="adm-card">
             <h3>How it works</h3>
-            <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.6, color: "var(--muted)", fontWeight: 700 }}>
+            <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.6, color: "var(--ink-muted)", fontWeight: 500 }}>
               <li>Keep this laptop within a few metres of the speaker, or feed the room mix into the mic input.</li>
               <li>Audio streams straight from this browser to <span className="mono">gemini-3.5-transcribe-live</span>; it auto-detects English and Indic languages.</li>
               <li>Each finished sentence is saved with its timestamp and pushed to every phone in under a second. Interim words show as live captions.</li>

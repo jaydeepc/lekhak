@@ -98,7 +98,7 @@ function AskInner() {
       <div className="screen">
         <div className="pad safe-top row" style={{ gap: 12, paddingTop: "max(24px,env(safe-area-inset-top))", paddingBottom: 14, borderBottom: "1px solid var(--line)" }}>
           <Link className="icon-btn" href={sessionId ? `/live/${sessionId}` : "/home"} aria-label="Back"><Back /></Link><div className="orb sm" />
-          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 17, fontWeight: 800 }}>Lekhak</div><div className="small" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{focus ? `Focused on ${focus.title}` : openTitles.length ? `Can answer from: ${openTitles.join(", ")}` : "Sign in to ask"}</div></div>
+          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 17, fontWeight: 600 }}>Lekhak</div><div className="small" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{focus ? `Focused on ${focus.title}` : openTitles.length ? `Can answer from: ${openTitles.join(", ")}` : "Sign in to ask"}</div></div>
           {msgs.length > 0 && <button type="button" className="pill" style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }} onClick={newChat} disabled={busy} aria-label="Start a new chat"><Plus size={14} />New chat</button>}
         </div>
         <div ref={logRef} className="pad col" style={{ gap: 20, paddingTop: 20, paddingBottom: 20, flex: 1 }}>
@@ -108,7 +108,7 @@ function AskInner() {
               {m.pending && !m.text ? <div className="typing"><i /><i /><i /></div> : <Md text={m.text} />}
               {m.sources.filter((s) => s.kind === "talk" && s.quote).map((s, i) => <TalkQuote key={i} s={s} />)}
               {m.sources.filter((s) => s.kind === "deck").map((s, i) => (
-                <div key={`d${i}`} className="deckref"><div className="hd"><span>From the deck · slide {s.page ?? "?"}</span>{s.documentId && me && <a href={`/api/documents/${s.documentId}/file#page=${s.page || 1}`} target="_blank" rel="noreferrer" style={{ color: "var(--orange-deep)", letterSpacing: 0, textTransform: "none" }}>Open</a>}</div><b>{s.title || s.documentName}</b>{s.excerpt && <p>{s.excerpt}</p>}</div>
+                <div key={`d${i}`} className="deckref"><div className="hd"><span>From the deck · slide {s.page ?? "?"}</span>{s.documentId && me && <a href={`/api/documents/${s.documentId}/file#page=${s.page || 1}`} target="_blank" rel="noreferrer" style={{ color: "var(--sky)", letterSpacing: 0, textTransform: "none" }}>Open</a>}</div><b>{s.title || s.documentName}</b>{s.excerpt && <p>{s.excerpt}</p>}</div>
               ))}
             </div>
           ))}
@@ -145,7 +145,7 @@ function TalkQuote({ s }: { s: Source }) {
       <div className="q">“{s.quote}”</div>
       <div className="row" style={{ gap: 12 }}>
         <button className="play" aria-label="Play this moment" onClick={toggle}>{playing ? <Pause /> : <Play />}</button>
-        <div className="col" style={{ flex: 1, gap: 6 }}><div className="row between" style={{ fontSize: 13, fontWeight: 800 }}><span>{s.t ? `Said at ${s.t}` : "From the talk"}</span><span style={{ opacity: .92 }}>{s.sessionTitle}</span></div><div className="bar"><i style={{ width: `${pct}%` }} /></div></div>
+        <div className="col" style={{ flex: 1, gap: 6 }}><div className="row between" style={{ fontSize: 13, fontWeight: 600 }}><span>{s.t ? `Said at ${s.t}` : "From the talk"}</span><span style={{ opacity: .92 }}>{s.sessionTitle}</span></div><div className="bar"><i style={{ width: `${pct}%` }} /></div></div>
       </div>
     </div>
   );

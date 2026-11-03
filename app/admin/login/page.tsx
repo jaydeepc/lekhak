@@ -14,7 +14,7 @@ export default function AdminLogin() {
   return (
     <main className="app" style={{ justifyContent: "center", minHeight: "100dvh" }}>
       <form onSubmit={submit} className="pad col" style={{ gap: 20, padding: "48px 32px" }}>
-        <Logo h={34} />
+        <Logo h={40} />
         <div><div className="eyebrow">Lekhak console</div><h1 style={{ fontSize: 30 }}>Host sign-in</h1><p className="lead" style={{ fontSize: 15 }}>Run the agenda, go live with the transcript, print passes, watch costs.</p></div>
         <div className="field"><label htmlFor="u">Username</label><input className="input" id="u" value={u} onChange={(e) => setU(e.target.value)} autoComplete="username" required /></div>
         <div className="field"><label htmlFor="p">Password</label><input className="input" id="p" type="password" value={p} onChange={(e) => setP(e.target.value)} autoComplete="current-password" required /></div>

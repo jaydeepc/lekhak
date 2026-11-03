@@ -22,8 +22,8 @@ export default function HomePage() {
     <App>
       <div className="screen">
         <div className="pad safe-top row between" style={{ paddingTop: "max(24px,env(safe-area-inset-top))" }}>
-          <div><div className="small" style={{ fontWeight: 700 }}>{greet}</div><div style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{first}</div></div>
-          <div className="row" style={{ gap: 10 }}><Logo h={30} /></div>
+          <div><div className="small" style={{ fontWeight: 500 }}>{greet}</div><div className="grad-text" style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em" }}>{first}</div></div>
+          <div className="row" style={{ gap: 10 }}><Logo h={34} /></div>
         </div>
         {feature && (
           <div className="pad" style={{ paddingTop: 18 }}>
@@ -37,10 +37,10 @@ export default function HomePage() {
         )}
         {live.length > 1 && (
           <div className="pad col" style={{ paddingTop: 12, gap: 8 }}>
-            {live.slice(1).map((s) => <Link key={s.id} href={`/live/${s.id}`} className="pill on row between" style={{ padding: "12px 14px", fontSize: 14 }}><span><span className="dot live-dot" style={{ marginRight: 8 }} />{s.title}</span><span className="small" style={{ color: "var(--orange-pressed)" }}>{s.room}</span></Link>)}
+            {live.slice(1).map((s) => <Link key={s.id} href={`/live/${s.id}`} className="pill on row between" style={{ padding: "12px 14px", fontSize: 14 }}><span><span className="dot live-dot" style={{ marginRight: 8 }} />{s.title}</span><span className="small" style={{ color: "var(--sky)" }}>{s.room}</span></Link>)}
           </div>
         )}
-        <div className="pad row between" style={{ alignItems: "baseline", paddingTop: 22 }}><h3 style={{ fontSize: 18 }}>Today&apos;s agenda</h3><span style={{ fontSize: 13, fontWeight: 800, color: "var(--orange-pressed)" }}>{open} of {talks.length} unlocked</span></div>
+        <div className="pad row between" style={{ alignItems: "baseline", paddingTop: 22 }}><h3 style={{ fontSize: 18 }}>Today&apos;s agenda</h3><span style={{ fontSize: 13, fontWeight: 600, color: "var(--sky)" }}>{open} of {talks.length} unlocked</span></div>
         <div className="pad" style={{ paddingTop: 8 }}><div className="progress"><i style={{ width: `${talks.length ? Math.round((open / talks.length) * 100) : 0}%` }} /></div></div>
         <div className="pad col" style={{ paddingTop: 6, paddingBottom: 24 }}>
           {!data && [1, 2, 3].map((i) => <div key={i} className="skel" style={{ height: 64, margin: "6px 0" }} />)}

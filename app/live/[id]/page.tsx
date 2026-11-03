@@ -42,12 +42,12 @@ export default function LivePage() {
           <div className={`orb ${status === "live" ? "" : "quiet"}`} style={{ width: "min(130px,32vw)" }} />
           <div>
             <div className="eyebrow">{status === "live" ? "Lekhak is listening" : status === "paused" ? "Paused by the host" : status === "ended" ? "Lekhak kept every word" : "Waiting for the host to go live"}</div>
-            <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5, marginTop: 4 }}>{s?.speaker || s?.title || "…"}</div>
+            <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: -0.5, marginTop: 4 }}>{s?.speaker || s?.title || "…"}</div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,.7)", marginTop: 4 }}>{s?.title}{s?.room ? ` · ${s.room}` : ""}</div>
           </div>
         </div>
         <div className="sheet">
-          <div className="row between"><b style={{ fontSize: 13 }}>Live transcript</b><span className="small" style={{ fontWeight: 700 }}>{connected ? `${segments.length} moments` : "reconnecting…"}</span></div>
+          <div className="row between"><b style={{ fontSize: 13 }}>Live transcript</b><span className="small" style={{ fontWeight: 500 }}>{connected ? `${segments.length} moments` : "reconnecting…"}</span></div>
           <div className="tx" ref={txRef} onScroll={onScroll}>
             {!segments.length && !interim && <p className="lead" style={{ fontSize: 14 }}>{status === "live" ? "Listening… the first words will appear here in a moment." : status === "upcoming" ? "The transcript will appear here, word by word, the moment the session goes live." : "No transcript was recorded for this session."}</p>}
             {recent.map((g, i) => <div key={g.seq} className={`tline ${i === recent.length - 1 && !interim ? "now" : ""}`}><div className="t">{fmtOffset(g.offsetMs)}</div><p>{g.text}{i === recent.length - 1 && !interim && status === "live" && <span className="caret" />}</p></div>)}

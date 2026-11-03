@@ -19,14 +19,14 @@ export default function SignIn() {
   return (
     <App>
       <div className="screen">
-        <Hero image="/assets/il-map.jpg" eyebrow="Investor Day 2026" title="Welcome, investor." back="/install" />
+        <Hero image="/brand/backdrop-portrait.jpg" eyebrow="Investor Day 2026" title="Welcome, investor." back="/install" />
         <form className="pad col" onSubmit={submit} style={{ paddingTop: 28, paddingBottom: 32, gap: 20, flex: 1 }}>
           <p className="lead">Enter the email your invitation came to. Your pass is already waiting.</p>
           <div className="field"><label htmlFor="email">Invitation email <span className="req">*</span></label><input className="input" id="email" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@firm.com" /></div>
           {err && <div className="err">{err}</div>}
           <button className="btn lg" type="submit" disabled={busy}>{busy ? <Spinner light /> : "Continue"}</button>
-          <div className="row" style={{ gap: 12, color: "var(--muted)", fontSize: 13, fontWeight: 700 }}><span style={{ flex: 1, height: 1, background: "var(--line)" }} />or<span style={{ flex: 1, height: 1, background: "var(--line)" }} /></div>
-          <Link className="btn ghost" href="/scan?mode=pass" style={{ color: "var(--navy-2)" }}><Scan />&nbsp;Scan the QR on your pass</Link>
+          <div className="row" style={{ gap: 12, color: "var(--ink-muted)", fontSize: 13, fontWeight: 500 }}><span style={{ flex: 1, height: 1, background: "var(--line)" }} />or<span style={{ flex: 1, height: 1, background: "var(--line)" }} /></div>
+          <Link className="btn ghost" href="/scan?mode=pass" style={{ color: "var(--ink)" }}><Scan />&nbsp;Scan the QR on your pass</Link>
           <div className="grow" />
           <p className="small center">Private to invited investors. What you ask Lekhak stays yours.</p>
         </form>

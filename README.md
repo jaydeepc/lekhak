@@ -67,6 +67,10 @@ This adds a `/etc/hosts` entry, issues a locally-trusted certificate with mkcert
 5. Booths: open `/slide/[id]` on the booth screen as the last slide; attendees scan to unlock.
 6. **Admin → Costs** for the live spend; **Questions** for what the room is asking.
 
+## Theme
+
+The app follows the **Piramal.ai** design system (midnight canvas with warm and cool haze, royal-blue cards, sky-blue actions, the flame only as the mark; Kumbh Sans with Montserrat for data). Tokens live at the top of `app/globals.css`; brand lockups and backdrops under `public/brand/`; screen illustrations under `public/assets/` were generated to match (GPT Image 2.5 "sunburst" via Higgsfield).
+
 ## Data (MongoDB)
 
 `sessions`, `segments`, `attendees`, `presence`, `unlocks`, `documents` + `uploads` (GridFS), `chunks` (slide text + embeddings), `chats`, `summaries`, `usage`, `settings`.

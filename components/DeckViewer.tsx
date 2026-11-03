@@ -16,7 +16,7 @@ export function DeckViewer({ doc, canOpen, initialPage }: { doc: DeckDoc; canOpe
     <div className="col" style={{ gap: 12 }}>
       <div className="row between" style={{ gap: 10 }}>
         <div className="label" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.name}</div>
-        {canOpen && <div className="row" style={{ gap: 12, flexShrink: 0 }}>{isPptx && officeHref && <a href={officeHref} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 800 }}>Open in PowerPoint viewer</a>}<a href={fileHref} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 800 }}>Download</a></div>}
+        {canOpen && <div className="row" style={{ gap: 12, flexShrink: 0 }}>{isPptx && officeHref && <a href={officeHref} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 600 }}>Open in PowerPoint viewer</a>}<a href={fileHref} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 600 }}>Download</a></div>}
       </div>
       {isPptx && !pptxFailed && <PptxViewer fileUrl={fileHref} onFail={setPptxFailed} />}
       {isPptx && pptxFailed && <p className="small">Couldn&apos;t render the original slides here ({pptxFailed}). Showing the slide text instead{officeHref ? ", or open the PowerPoint viewer above" : ""}.</p>}

@@ -27,11 +27,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="adm">
       <aside className="adm-side">
-        <div className="brand"><div className="logo"><Logo h={22} /></div><div><b>Lekhak console</b><span>Investor Day</span></div></div>
+        <div className="brand"><div className="logo"><Logo h={26} /></div><div><b>Lekhak console</b><span>Investor &amp; Analyst Day</span></div></div>
         <nav>{NAV.map(([href, label, icon]) => <Link key={href} href={href} className={(href === "/admin" ? path === href : path.startsWith(href)) || (href === "/admin/sessions" && path.startsWith("/admin/live")) ? "on" : ""}>{icon}{label}</Link>)}</nav>
         <div className="foot">
-          <Link href="/entrance" target="_blank" style={{ color: "rgba(255,255,255,.8)", fontWeight: 700 }}>Open entrance QR screen ↗</Link>
-          <Link href="/home" target="_blank" style={{ color: "rgba(255,255,255,.8)", fontWeight: 700 }}>Open attendee app ↗</Link>
+          <Link href="/entrance" target="_blank" style={{ color: "rgba(255,255,255,.8)", fontWeight: 500 }}>Open entrance QR screen ↗</Link>
+          <Link href="/home" target="_blank" style={{ color: "rgba(255,255,255,.8)", fontWeight: 500 }}>Open attendee app ↗</Link>
           <button className="btn text" style={{ color: "rgba(255,255,255,.6)", height: 32, justifyContent: "flex-start", padding: 0 }} onClick={async () => { await api("/api/admin/logout", { method: "POST" }); router.replace("/admin/login"); }}>Sign out ({admin.username})</button>
         </div>
       </aside>

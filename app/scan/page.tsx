@@ -69,8 +69,8 @@ function ScanInner() {
           <div className="top safe-top"><Link className="icon-btn" href={me ? "/home" : "/signin"} aria-label="Close"><Close /></Link><span className="chip glass">{passMode ? "Scan your pass" : "Scan to unlock"}</span><span style={{ width: 44 }} /></div>
           <div className="finder"><i /><i /><i /><i /><div className="line" /></div>
         </div>
-        <div style={{ background: "#fff", color: "var(--ink)", padding: "24px 24px max(36px,env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", gap: 14 }}>
-          <div><div style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.5 }}>{passMode ? "Point at the QR on your pass" : "Point at the last slide"}</div><div className="small" style={{ fontSize: 14 }}>{camera === "on" ? "Camera on. Hold steady for a second." : camera === "starting" ? "Starting the camera…" : "Camera unavailable here — type the room code instead."}</div></div>
+        <div className="scan-sheet">
+          <div><div style={{ fontSize: 24, fontWeight: 600, letterSpacing: -0.5 }}>{passMode ? "Point at the QR on your pass" : "Point at the last slide"}</div><div className="small" style={{ fontSize: 14 }}>{camera === "on" ? "Camera on. Hold steady for a second." : camera === "starting" ? "Starting the camera…" : "Camera unavailable here — type the room code instead."}</div></div>
           {found && <div className="found"><span className="ic"><Unlock /></span><div style={{ flex: 1 }}><small>Code found</small><b>{found}</b></div><Chev /></div>}
           {!passMode && (
             <form className="row" style={{ gap: 10 }} onSubmit={(e) => { e.preventDefault(); submitCode(code); }}>

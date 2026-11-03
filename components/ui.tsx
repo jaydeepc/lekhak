@@ -35,7 +35,7 @@ export function Hero({ image, title, eyebrow, sub, right, back = "/home", dim, f
 
 export function QR({ text, size = 512, className }: { text: string; size?: number; className?: string }) {
   const [src, setSrc] = useState<string>("");
-  useEffect(() => { let on = true; QRCode.toDataURL(text, { width: size, margin: 1, errorCorrectionLevel: "M", color: { dark: "#20303F", light: "#FFFFFF" } }).then((u) => { if (on) setSrc(u); }); return () => { on = false; }; }, [text, size]);
+  useEffect(() => { let on = true; QRCode.toDataURL(text, { width: size, margin: 1, errorCorrectionLevel: "M", color: { dark: "#000b4b", light: "#FFFFFF" } }).then((u) => { if (on) setSrc(u); }); return () => { on = false; }; }, [text, size]);
   return src ? <img src={src} alt="QR code" className={className} /> : <div className={`skel ${className || ""}`} style={{ width: "100%", aspectRatio: "1" }} />;
 }
 
@@ -68,5 +68,5 @@ export function speak(text: string, onEnd: () => void): () => void {
 }
 
 export function Spinner({ light }: { light?: boolean }) {
-  return <span style={{ display: "inline-block", width: 18, height: 18, border: `2.5px solid ${light ? "rgba(255,255,255,.35)" : "#E1E1E2"}`, borderTopColor: light ? "#fff" : "#EF4123", borderRadius: "50%", animation: "spin .8s linear infinite" }} />;
+  return <span style={{ display: "inline-block", width: 18, height: 18, border: `2.5px solid ${light ? "rgba(0,11,75,.25)" : "rgba(255,255,255,.2)"}`, borderTopColor: light ? "#000b4b" : "#59bdfc", borderRadius: "50%", animation: "spin .8s linear infinite" }} />;
 }
