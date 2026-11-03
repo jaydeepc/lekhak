@@ -120,9 +120,9 @@ TWO KINDS OF SOURCES — keep them clearly separate in your answer, every time:
 2. THE DECK — slides the speaker is presenting. Deck facts are introduced as deck facts ("The deck says…", "On slide 7 the deck shows…", "डेक में लिखा है…"). NEVER say the speaker "said", "explained", "mentioned" or "highlighted" something that appears only in the deck.
 
 ANSWER SHAPE — always two sections, each opened by a marker line, in this order:
-<<TALK|label>>  — the label is "From the talk" written in the investor's language (e.g. "From the talk", "टॉक से", "பேச்சிலிருந்து"). Under it: what the speaker actually said about the topic, with the timestamp(s) in brackets like [12:40]. If the transcript has nothing on the topic, say so plainly, e.g. "Jairam hasn't said anything about this in the talk so far." / "अभी तक जयराम ने इस बारे में कुछ नहीं कहा है।" If there is no transcript at all yet, say the talk has not started (or has not been captured) yet.
-<<DECK|label>>  — the label is "From the deck" in the investor's language. Under it: what the deck being presented says, naming slide numbers like "slide 7". If no slide covers it, say "The deck doesn't cover this either." Omit this whole section only when there is no deck at all.
-Write short markdown under each marker (one to three sentences, or up to four short bullets). Never merge the two into one claim; never put the deck's facts under the talk marker.
+<<TALK|label>>  — the label is "From the talk" written in the investor's language (e.g. "From the talk", "टॉक से", "பேச்சிலிருந்து"). Under it: answer the question directly, in your own words, from what the speaker actually said, as if briefing a colleague ("Jairam's point was that…", "He argued…"). You may quote one short phrase. Do NOT write timestamps, brackets or "at 12:40" in this text: the timestamps go only in the SOURCES JSON, which the app shows as citation chips. If the transcript has nothing on the topic, say so plainly, e.g. "Jairam hasn't said anything about this in the talk so far." / "अभी तक जयराम ने इस बारे में कुछ नहीं कहा है।" If there is no transcript at all yet, say the talk has not started (or has not been captured) yet.
+<<DECK|label>>  — the label is "From the deck" in the investor's language. Under it: what the deck being presented says about it, as a direct answer; slide numbers go in the SOURCES JSON (you may mention a slide in passing, but don't list them). If no slide covers it, say "The deck doesn't cover this either." Omit this whole section only when there is no deck at all.
+Write short, readable markdown under each marker: a direct first sentence, then at most two more sentences or three short bullets. Never merge the two into one claim; never put the deck's facts under the talk marker.
 
 RULES:
 - Be brief: one to three sentences per part. Plain sentences, no headers; short markdown bullets are fine for lists.
@@ -132,7 +132,7 @@ RULES:
 
 OUTPUT FORMAT (strict): the two marker sections as above, then on a new line write ${SOURCES_MARK} followed by a single JSON object:
 {"talk":[{"sessionId":"…","t":"mm:ss","quote":"exact or near-exact words from the transcript"}],"deck":[{"documentId":"…","page":14,"title":"slide title","excerpt":"the relevant slide text"}]}
-Include at most 3 talk quotes and 3 deck references, only ones you actually used. If none, use empty arrays. Always include the ${SOURCES_MARK} line.`;
+Include every talk moment you drew on (up to 4, each with its mm:ss and the words said) and every deck slide you drew on (up to 3). The app renders these as citation chips under the answer, so the answer text itself must stay clean. If none, use empty arrays. Always include the ${SOURCES_MARK} line.`;
 }
 
 export function buildContextBlock(talks: TalkContext[], decks: DeckContext[]): string {

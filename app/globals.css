@@ -157,7 +157,7 @@ textarea.input{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
 .nav a.on{color:var(--flame-light);border-top-color:var(--flame)}
 
 /* ---------- Chat ---------- */
-.bubble{align-self:flex-end;max-width:85%;background:var(--panel-grad);color:var(--on-panel);border-radius:var(--r-md) var(--r-md) 4px var(--r-md);padding:12px 16px;font-size:16px;line-height:1.45;font-weight:400;white-space:pre-wrap}
+.bubble{align-self:flex-end;max-width:85%;background:var(--flame-grad);color:var(--on-flame);border-radius:var(--r-md) var(--r-md) 4px var(--r-md);padding:12px 16px;font-size:16px;line-height:1.45;font-weight:400;white-space:pre-wrap}
 .answer{font-size:16px;line-height:1.55;margin:0;color:var(--ink)}
 .answer p{margin:0 0 8px}
 .answer p:last-child{margin-bottom:0}
@@ -368,13 +368,13 @@ textarea.input{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
 
 /* ---------- Answer sections: talk vs deck ---------- */
 .ans{border-radius:var(--r-md);padding:12px 14px 12px;display:flex;flex-direction:column;gap:8px}
-.ans-talk{background:var(--card);box-shadow:var(--glow-card)}
-.ans-deck{background:var(--panel-grad);box-shadow:0 0 0 1px var(--line);color:var(--on-panel)}
+.ans-talk{background:linear-gradient(180deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,.03) 100%);box-shadow:0 0 0 1px rgba(255,180,142,.28)}
+.ans-deck{background:linear-gradient(180deg,rgba(49,80,152,.42) 0%,rgba(16,86,143,.3) 100%);box-shadow:0 0 0 1px rgba(89,189,252,.3);color:var(--ink)}
 .ans-hd{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--flame-light)}
-.ans-deck .ans-hd{color:#fff;opacity:.9}
+.ans-deck .ans-hd{color:var(--sky)}
 .ans-body{font-size:15px}
-.ans-deck .ans-body,.ans-deck .ans-body b{color:#fff}
+.ans-deck .ans-body{color:var(--ink)}.ans-deck .ans-body b{color:var(--sky)}
 .cites{display:flex;gap:6px;flex-wrap:wrap;padding-top:2px}
 .cite{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-data);font-size:11px;font-weight:600;letter-spacing:.02em;padding:4px 8px;border-radius:var(--r-full);background:rgba(255,255,255,.08);color:var(--flame-light);border:1px solid rgba(255,180,142,.35);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.ans-deck .cite{color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.12)}
+.ans-deck .cite{color:var(--sky);border-color:rgba(89,189,252,.4);background:rgba(89,189,252,.1)}
 a.cite:hover{filter:brightness(1.1)}
