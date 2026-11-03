@@ -342,10 +342,6 @@ textarea.input{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
 .md-theme .pct{font-size:13px;font-weight:600;color:var(--flame-light);font-variant-numeric:tabular-nums;font-family:var(--font-data)}
 .md-theme p{margin:6px 0 0;font-size:13px;line-height:1.45;color:var(--ink-muted)}
 .md-theme .md-bar i{background:var(--flame-grad)}
-.md-room-row .md-bar i{background:linear-gradient(90deg,var(--azure),var(--sky))}
-.md-room{display:flex;flex-direction:column;gap:12px}
-.md-room-row b{font-size:14px;color:var(--ink)}
-.md-room-row .ex{display:block;margin-top:5px;font-size:12px;color:var(--ink-muted);font-weight:400}
 .md-claims{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px}
 .md-claim{display:grid;grid-template-columns:40px 1fr auto;gap:8px;align-items:start;font-size:13px;line-height:1.4}
 .md-claim .t{font-size:11px;font-weight:600;color:var(--sky);font-variant-numeric:tabular-nums;padding-top:2px;text-align:right}

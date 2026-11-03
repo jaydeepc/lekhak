@@ -189,10 +189,8 @@ export async function myDay(attendeeId: ObjectId, opts: { generate?: boolean } =
       } catch { lines = cached?.text || ""; }
     }
   }
-  const room = await getRoomAsked({ generate: opts.generate !== false });
   return {
     notes,
-    room,
     threeLines: lines,
     questions: chats.reverse().map((c) => ({ id: c._id.toString(), text: c.text, at: c.createdAt })),
     totals: { sessions: sessions.length, attended: notes.length, minutes: notes.reduce((n, x) => n + x.minutes, 0), questions: chats.length },

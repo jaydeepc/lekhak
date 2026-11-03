@@ -8,7 +8,7 @@ import { useRequireMe } from "@/components/guard";
 
 interface Insights { themes: { name: string; share: number; gist: string }[]; claims: { t: string; claim: string; slide: number | null }[] }
 interface Note { session: Session; minutes: number; unlocked: boolean; segmentsHeard: number; totalSegments: number; windows: { from: string; to: string }[]; summary: { headline: string; points: { t: string; point: string }[]; numbers: string[]; createdAt: string } | null; insights: Insights | null }
-interface Day { notes: Note[]; room: { topic: string; count: number; example: string }[]; threeLines: string; questions: { id: string; text: string; at: string }[]; totals: { sessions: number; attended: number; minutes: number; questions: number } }
+interface Day { notes: Note[]; threeLines: string; questions: { id: string; text: string; at: string }[]; totals: { sessions: number; attended: number; minutes: number; questions: number } }
 
 export default function MyDay() {
   const me = useRequireMe();
@@ -96,16 +96,6 @@ export default function MyDay() {
               {/* ---- per-session notes ---- */}
               {d.notes.length > 0 && <div className="md-h"><span className="label">Your sessions</span><span className="tiny">{d.notes.length} with notes</span></div>}
               {d.notes.map((n) => <NoteCard key={n.session.id} n={n} />)}
-
-              {/* ---- what the room asked ---- */}
-              {d.room.length > 0 && (
-                <section className="md-card md-card--deep">
-                  <div className="md-h"><span className="label">What the room is asking</span><span className="tiny">all investors · anonymous</span></div>
-                  <div className="md-room">{d.room.map((t, i) => { const max = Math.max(...d.room.map((x) => x.count)); return (
-                    <div key={i} className="md-room-row"><div className="row between"><b>{t.topic}</b><span className="tiny">{t.count} question{t.count > 1 ? "s" : ""}</span></div><div className="md-bar"><i style={{ width: `${Math.max(6, Math.round((t.count / max) * 100))}%` }} /></div><span className="ex">“{t.example}”</span></div>
-                  ); })}</div>
-                </section>
-              )}
 
               {/* ---- questions ---- */}
               {d.questions.length > 0 && (
