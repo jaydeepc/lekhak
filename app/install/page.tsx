@@ -17,7 +17,7 @@ export default function Install() {
   return (
     <App>
       <div className="screen">
-        <div className="hero fade" style={{ backgroundImage: "url('/assets/hero.jpg')", minHeight: 360, justifyContent: "flex-start" }}>
+        <div className="hero fade" style={{ backgroundImage: "url('/assets/hero.jpg?v=3')", minHeight: 360, justifyContent: "flex-start" }}>
           <div className="top safe-top"><div className="logo-chip"><Logo h={34} /></div></div>
         </div>
         <div className="pad col" style={{ paddingTop: 28, paddingBottom: 32, gap: 24, flex: 1, justifyContent: "space-between" }}>
@@ -25,7 +25,7 @@ export default function Install() {
             <div className="eyebrow">Investor Day 2026</div>
             <h1>Every word.<br />Kept for you.</h1>
             <p className="lead">The keynote, every booth, and Lekhak, an AI note-taker you can ask anything, in your language. One tap to install, no app store.</p>
-            <img src="/brand/building-ai-for-bharat.png" alt="Building AI for Bharat" style={{ height: 44, width: "auto", marginTop: 4 }} />
+            <img src="/brand/building-ai-for-bharat.png" alt="Building AI for Bharat" style={{ height: 44, width: "auto", alignSelf: "flex-start", flexShrink: 0, marginTop: 4 }} />
           </div>
           <div className="col" style={{ gap: 14 }}>
             <button className="btn lg" onClick={install}>Add to home screen</button>

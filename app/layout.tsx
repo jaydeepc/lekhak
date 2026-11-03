@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: { default: "Lekhak · Piramal.ai", template: "%s · Lekhak" },
   description: "The keynote, every booth, and an AI note-taker you can ask anything — live.",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/assets/icon-192.png", apple: "/assets/apple-touch-icon.png" },
+  icons: { icon: "/assets/icon-192.png?v=3", apple: "/assets/apple-touch-icon.png?v=3" },
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Lekhak" },
 };
 export const viewport: Viewport = { themeColor: "#000b4b", width: "device-width", initialScale: 1, viewportFit: "cover" };

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { App, Nav, Spinner } from "@/components/ui";
 import { Back, Logo, Spark, Unlock } from "@/components/icons";
-import { api, timeHM, useSessions, type Session } from "@/components/api";
+import { api, timeHM, useSessions, type Session, asset } from "@/components/api";
 import { useRequireMe } from "@/components/guard";
 
 interface Insights { themes: { name: string; share: number; gist: string }[]; claims: { t: string; claim: string; slide: number | null }[] }
@@ -36,13 +36,13 @@ export default function MyDay() {
   return (
     <App>
       <div className="screen md">
-        <header className="hero md-hero" style={{ backgroundImage: "url('/assets/il-digest.jpg')" }}>
+        <header className="hero md-hero" style={{ backgroundImage: "url('/assets/il-digest.jpg?v=3')" }}>
           <div className="top safe-top">
             <Link className="icon-btn" href="/home" aria-label="Back"><Back /></Link>
             <div className="row" style={{ gap: 8 }}><button className="chip glass no-print" style={{ border: "1px solid rgba(255,255,255,.4)" }} onClick={() => window.print()}>Export PDF</button><div className="logo-chip" style={{ alignSelf: "center" }}><Logo h={26} /></div></div>
           </div>
           <div>
-            <div className="eyebrow">Lekhak&apos;s notes{dateLabel ? ` · ${dateLabel}` : ""}</div>
+            <span className="chip glass" style={{ marginBottom: 10 }}>Lekhak&apos;s notes{dateLabel ? ` · ${dateLabel}` : ""}</span>
             <h1 style={{ fontSize: 30 }}><span className="grad-text">{first},</span> here&apos;s what you kept.</h1>
             <div className="lead" style={{ marginTop: 6, fontSize: 14 }}>{agenda?.event.name || "Investor Day"}{agenda?.event.venue ? ` · ${agenda.event.venue}` : ""}</div>
           </div>
@@ -99,7 +99,7 @@ export default function MyDay() {
 
               {/* ---- what the room asked ---- */}
               {d.room.length > 0 && (
-                <section className="md-card">
+                <section className="md-card md-card--deep">
                   <div className="md-h"><span className="label">What the room is asking</span><span className="tiny">all investors · anonymous</span></div>
                   <div className="md-room">{d.room.map((t, i) => { const max = Math.max(...d.room.map((x) => x.count)); return (
                     <div key={i} className="md-room-row"><div className="row between"><b>{t.topic}</b><span className="tiny">{t.count} question{t.count > 1 ? "s" : ""}</span></div><div className="md-bar"><i style={{ width: `${Math.max(6, Math.round((t.count / max) * 100))}%` }} /></div><span className="ex">“{t.example}”</span></div>
@@ -144,7 +144,7 @@ function Ring({ value, max }: { value: number; max: number }) {
 function Themes({ themes }: { themes: { name: string; share: number; gist: string; session: string }[] }) {
   const max = Math.max(...themes.map((t) => t.share), 1);
   return (
-    <section className="md-card">
+    <section className="md-card md-card--deep">
       <div className="md-h"><span className="label">What the day was about</span><span className="tiny">share of talk time</span></div>
       <div className="md-themes">
         {themes.map((t, i) => (
@@ -163,7 +163,7 @@ function NoteCard({ n }: { n: Note }) {
   const cov = n.totalSegments ? Math.round((n.segmentsHeard / n.totalSegments) * 100) : 0;
   return (
     <article className="md-note">
-      <div className="md-banner" style={{ backgroundImage: `url('${n.session.image}')` }}>
+      <div className="md-banner" style={{ backgroundImage: `url('${asset(n.session.image)}')` }}>
         <div className="row between" style={{ alignItems: "flex-start" }}><span className="chip glass">{n.session.room}</span>{n.unlocked && <span className="chip orange"><Unlock size={12} />Unlocked</span>}</div>
         <div><div className="eyebrow" style={{ color: "var(--sky)" }}>{timeHM(n.session.startAt)}–{timeHM(n.session.endAt)}{n.session.speaker ? ` · ${n.session.speaker}` : ""}</div><h3>{n.session.title}</h3></div>
       </div>

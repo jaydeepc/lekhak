@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { App, Nav } from "@/components/ui";
 import { Lock, Logo, Unlock } from "@/components/icons";
-import { timeHM, useSessions, type Session } from "@/components/api";
+import { timeHM, useSessions, type Session, asset } from "@/components/api";
 import { useRequireMe } from "@/components/guard";
 
 export default function HomePage() {
@@ -27,7 +27,7 @@ export default function HomePage() {
         </div>
         {feature && (
           <div className="pad" style={{ paddingTop: 18 }}>
-            <Link href={feature.status === "live" || feature.status === "paused" ? `/live/${feature.id}` : `/session/${feature.id}`} className="live-card" style={{ backgroundImage: `url('${feature.image}')` }}>
+            <Link href={feature.status === "live" || feature.status === "paused" ? `/live/${feature.id}` : `/session/${feature.id}`} className="live-card" style={{ backgroundImage: `url('${asset(feature.image)}')` }}>
               {feature.status === "live" ? <span className="chip glass"><span className="dot live-dot" />Live now</span> : feature.status === "paused" ? <span className="chip glass">Paused</span> : <span className="chip glass">{feature.kind === "keynote" ? "Keynote" : "Up next"} · {timeHM(feature.startAt)}</span>}
               <div className="eyebrow">{feature.room}</div>
               <div className="title">{feature.title}</div>

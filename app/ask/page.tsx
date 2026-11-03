@@ -2,15 +2,33 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { App, Md, Nav, speak, useToast } from "@/components/ui";
-import { Back, Mic, Pause, Play, Plus, Send } from "@/components/icons";
+import { App, Md, Nav, useToast } from "@/components/ui";
+import { Back, File, Mic, Plus, Send } from "@/components/icons";
 import { api, useSessions } from "@/components/api";
 import { useRequireMe } from "@/components/guard";
 import { LiveMic } from "@/components/liveMic";
 
 interface Source { kind: "talk" | "deck"; sessionId?: string; sessionTitle?: string; t?: string; quote?: string; documentId?: string; documentName?: string; page?: number; title?: string; excerpt?: string }
+interface Section { kind: "talk" | "deck" | "plain"; label: string; text: string }
 interface Msg { id: string; role: "user" | "assistant"; text: string; sources: Source[]; pending?: boolean }
 const MARK = "<<<SOURCES>>>";
+
+/** Splits an answer into its talk / deck sections (markers are language-agnostic, labels are the model's). */
+function sections(text: string): Section[] {
+  const out: Section[] = [];
+  const re = /<<(TALK|DECK)\|([^>\n]*)>>/g;
+  let last = 0, m: RegExpExecArray | null, cur: Section | null = null;
+  while ((m = re.exec(text))) {
+    const before = text.slice(last, m.index).trim();
+    if (cur) cur.text = before; else if (before) out.push({ kind: "plain", label: "", text: before });
+    cur = { kind: m[1] === "TALK" ? "talk" : "deck", label: m[2].trim(), text: "" };
+    out.push(cur);
+    last = m.index + m[0].length;
+  }
+  const tail = text.slice(last).replace(/<<(TALK|DECK)?\|?[^>]*$/, "").trim(); // drop a half-streamed marker
+  if (cur) cur.text = tail; else if (tail) out.push({ kind: "plain", label: "", text: tail });
+  return out.filter((s) => s.kind !== "plain" || s.text);
+}
 
 function parse(full: string): { text: string; sources: Source[]; done: boolean } {
   const i = full.indexOf(MARK);
@@ -102,16 +120,8 @@ function AskInner() {
           {msgs.length > 0 && <button type="button" className="pill" style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }} onClick={newChat} disabled={busy} aria-label="Start a new chat"><Plus size={14} />New chat</button>}
         </div>
         <div ref={logRef} className="pad col" style={{ gap: 20, paddingTop: 20, paddingBottom: 20, flex: 1 }}>
-          {!msgs.length && <div className="col" style={{ gap: 14 }}><p className="answer">Ask me about anything said in the room, in any language — I&apos;ll quote the moment, tell you what the deck adds, and you can hear it again.</p><div className="row" style={{ gap: 8, flexWrap: "wrap" }}>{suggestions.map((s) => <button key={s} type="button" className="pill" onClick={() => ask(s)}>{s}</button>)}</div></div>}
-          {msgs.map((m) => m.role === "user" ? <div key={m.id} className="bubble">{m.text}</div> : (
-            <div key={m.id} className="col" style={{ gap: 14 }}>
-              {m.pending && !m.text ? <div className="typing"><i /><i /><i /></div> : <Md text={m.text} />}
-              {m.sources.filter((s) => s.kind === "talk" && s.quote).map((s, i) => <TalkQuote key={i} s={s} />)}
-              {m.sources.filter((s) => s.kind === "deck").map((s, i) => (
-                <div key={`d${i}`} className="deckref"><div className="hd"><span>From the deck · slide {s.page ?? "?"}</span>{s.documentId && me && <a href={`/api/documents/${s.documentId}/file#page=${s.page || 1}`} target="_blank" rel="noreferrer" style={{ color: "var(--sky)", letterSpacing: 0, textTransform: "none" }}>Open</a>}</div><b>{s.title || s.documentName}</b>{s.excerpt && <p>{s.excerpt}</p>}</div>
-              ))}
-            </div>
-          ))}
+          {!msgs.length && <div className="col" style={{ gap: 14 }}><p className="answer">Ask me about anything said in the room, in any language. I&apos;ll tell you what was said on stage, with the time it was said, and what the deck adds, kept clearly apart.</p><div className="row" style={{ gap: 8, flexWrap: "wrap" }}>{suggestions.map((s) => <button key={s} type="button" className="pill" onClick={() => ask(s)}>{s}</button>)}</div></div>}
+          {msgs.map((m) => m.role === "user" ? <div key={m.id} className="bubble">{m.text}</div> : <Answer key={m.id} m={m} />)}
           {msgs.length > 0 && !busy && <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>{suggestions.slice(0, 2).map((s) => <button key={s} type="button" className="pill" onClick={() => ask(s)}>{s}</button>)}</div>}
         </div>
         <form className="composer" onSubmit={(e) => { e.preventDefault(); ask(q); }}>
@@ -127,28 +137,30 @@ function AskInner() {
   );
 }
 
-function TalkQuote({ s }: { s: Source }) {
-  const [playing, setPlaying] = useState(false);
-  const [pct, setPct] = useState(0);
-  const stopRef = useRef<(() => void) | null>(null);
-  const toggle = () => {
-    if (playing) { stopRef.current?.(); stopRef.current = null; setPlaying(false); setPct(0); return; }
-    const t0 = performance.now(), dur = Math.min(16000, 65 * (s.quote?.length || 20));
-    setPlaying(true);
-    const tick = () => { if (!stopRef.current) return; setPct(Math.min(100, ((performance.now() - t0) / dur) * 100)); requestAnimationFrame(tick); };
-    stopRef.current = speak(s.quote || "", () => { stopRef.current = null; setPlaying(false); setPct(100); });
-    requestAnimationFrame(tick);
-  };
-  useEffect(() => () => { stopRef.current?.(); }, []);
+/** One assistant turn: a "from the talk" block with timestamp citations, and a "from the deck" block with slide citations. */
+function Answer({ m }: { m: Msg }) {
+  if (m.pending && !m.text) return <div className="typing"><i /><i /><i /></div>;
+  const secs = sections(m.text);
+  const talkSrc = m.sources.filter((s) => s.kind === "talk");
+  const deckSrc = m.sources.filter((s) => s.kind === "deck");
+  if (!secs.some((s) => s.kind !== "plain")) return <div className="col" style={{ gap: 12 }}><Md text={m.text} /><Cites talk={talkSrc} deck={deckSrc} /></div>;
   return (
-    <div className="quote">
-      <div className="q">“{s.quote}”</div>
-      <div className="row" style={{ gap: 12 }}>
-        <button className="play" aria-label="Play this moment" onClick={toggle}>{playing ? <Pause /> : <Play />}</button>
-        <div className="col" style={{ flex: 1, gap: 6 }}><div className="row between" style={{ fontSize: 13, fontWeight: 600 }}><span>{s.t ? `Said at ${s.t}` : "From the talk"}</span><span style={{ opacity: .92 }}>{s.sessionTitle}</span></div><div className="bar"><i style={{ width: `${pct}%` }} /></div></div>
-      </div>
+    <div className="col" style={{ gap: 12 }}>
+      {secs.map((s, i) => s.kind === "plain" ? <Md key={i} text={s.text} /> : (
+        <section key={i} className={`ans ans-${s.kind}`}>
+          <div className="ans-hd">{s.kind === "talk" ? <Mic size={15} /> : <File size={15} />}<span>{s.label || (s.kind === "talk" ? "From the talk" : "From the deck")}</span></div>
+          <Md text={s.text} className="answer ans-body" />
+          {s.kind === "talk" && talkSrc.length > 0 && <div className="cites">{talkSrc.map((c, j) => <span key={j} className="cite" title={c.quote}>{c.t ? `[${c.t}]` : "said"}{c.sessionTitle ? ` · ${c.sessionTitle}` : ""}</span>)}</div>}
+          {s.kind === "deck" && deckSrc.length > 0 && <div className="cites">{deckSrc.map((c, j) => c.documentId ? <a key={j} className="cite" href={`/api/documents/${c.documentId}/file#page=${c.page || 1}`} target="_blank" rel="noreferrer" title={c.excerpt}>Slide {c.page ?? "?"}{c.title ? ` · ${c.title}` : ""}</a> : <span key={j} className="cite">Slide {c.page ?? "?"}</span>)}</div>}
+        </section>
+      ))}
     </div>
   );
+}
+
+function Cites({ talk, deck }: { talk: Source[]; deck: Source[] }) {
+  if (!talk.length && !deck.length) return null;
+  return <div className="cites">{talk.map((c, j) => <span key={`t${j}`} className="cite" title={c.quote}>{c.t ? `[${c.t}]` : "said"}{c.sessionTitle ? ` · ${c.sessionTitle}` : ""}</span>)}{deck.map((c, j) => <span key={`d${j}`} className="cite" title={c.excerpt}>Slide {c.page ?? "?"}</span>)}</div>;
 }
 
 export default function AskPage() { return <Suspense fallback={<App><div className="screen" /></App>}><AskInner /></Suspense>; }

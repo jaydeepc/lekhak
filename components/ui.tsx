@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { Home, Scan, Spark, Book, Back } from "./icons";
+import { asset } from "./api";
 
 /* ---------- toast ---------- */
 const ToastCtx = createContext<(msg: string) => void>(() => {});
@@ -26,7 +27,7 @@ export function Nav({ on }: { on: "home" | "scan" | "ask" | "myday" | "" }) {
 
 export function Hero({ image, title, eyebrow, sub, right, back = "/home", dim, fade, minHeight }: { image: string; title: ReactNode; eyebrow?: string; sub?: string; right?: ReactNode; back?: string; dim?: boolean; fade?: boolean; minHeight?: number }) {
   return (
-    <header className={`hero ${dim ? "dim" : ""} ${fade ? "fade" : ""}`} style={{ backgroundImage: `url('${image}')`, minHeight }}>
+    <header className={`hero ${dim ? "dim" : ""} ${fade ? "fade" : ""}`} style={{ backgroundImage: `url('${asset(image)}')`, minHeight }}>
       <div className="top safe-top"><Link className="icon-btn" href={back} aria-label="Back"><Back /></Link>{right}</div>
       <div>{eyebrow && <div className="eyebrow">{eyebrow}</div>}<h1>{title}</h1>{sub && <div className="lead" style={{ marginTop: 6, fontSize: 14 }}>{sub}</div>}</div>
     </header>

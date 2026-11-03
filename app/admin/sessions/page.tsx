@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { api, timeHM } from "@/components/api";
+import { api, timeHM, asset } from "@/components/api";
 import { IMAGES, bytes, fromLocalInput, toLocalInput, uploadDocument, useAdminSessions, type AdminSession } from "@/components/admin";
 import { useToast } from "@/components/ui";
 import { Radio, Trash, Upload } from "@/components/icons";
@@ -50,7 +50,7 @@ export default function SessionsPage() {
       <div className="col" style={{ gap: 14 }}>
         {sessions?.map((s) => (
           <div key={s.id} className="sess-card">
-            <div className="img" style={{ backgroundImage: `url('${s.image}')` }} />
+            <div className="img" style={{ backgroundImage: `url('${asset(s.image)}')` }} />
             <div style={{ minWidth: 0 }}>
               <div className="row" style={{ gap: 10, flexWrap: "wrap" }}><h4>{s.title}</h4><span className={`status ${s.status}`}>{s.status === "live" && <span className="dot live-dot" />}{s.status}</span>{s.alwaysOpen && <span className="status upcoming">open to all</span>}</div>
               <div className="meta">{timeHM(s.startAt)}–{timeHM(s.endAt)} · {s.room}{s.speaker ? ` · ${s.speaker}${s.speakerTitle ? `, ${s.speakerTitle}` : ""}` : ""} · code <span className="mono">{s.code}</span> · {s.segments} transcript moments</div>
@@ -89,7 +89,7 @@ export default function SessionsPage() {
               <div className="field"><label>Room code (printed on the last slide)</label><input className="input" value={f.code} onChange={(e) => set("code", e.target.value.toUpperCase())} placeholder="auto" maxLength={8} /></div>
               <div className="field"><label>Order</label><input className="input" type="number" value={f.order} onChange={(e) => set("order", Number(e.target.value))} /></div>
               <div className="field span-all"><label>Description</label><textarea className="input" value={f.description} onChange={(e) => set("description", e.target.value)} /></div>
-              <div className="field span-all"><label>Card image</label><div className="row" style={{ gap: 8, flexWrap: "wrap" }}>{IMAGES.map(([src, name]) => <button key={src} type="button" onClick={() => set("image", src)} title={name} style={{ width: 64, height: 48, borderRadius: 6, border: f.image === src ? "3px solid var(--sky)" : "1px solid var(--line)", background: `url('${src}') center/cover`, cursor: "pointer" }} />)}<input className="input" style={{ flex: 1, minWidth: 200 }} value={f.image} onChange={(e) => set("image", e.target.value)} placeholder="or paste an image URL" /></div></div>
+              <div className="field span-all"><label>Card image</label><div className="row" style={{ gap: 8, flexWrap: "wrap" }}>{IMAGES.map(([src, name]) => <button key={src} type="button" onClick={() => set("image", src)} title={name} style={{ width: 64, height: 48, borderRadius: 6, border: f.image === src ? "3px solid var(--sky)" : "1px solid var(--line)", background: `url('${asset(src)}') center/cover`, cursor: "pointer" }} />)}<input className="input" style={{ flex: 1, minWidth: 200 }} value={f.image} onChange={(e) => set("image", e.target.value)} placeholder="or paste an image URL" /></div></div>
               <label className="row" style={{ gap: 10, fontWeight: 500, fontSize: 14 }}><input type="checkbox" checked={f.alwaysOpen} onChange={(e) => set("alwaysOpen", e.target.checked)} />Open to every attendee without scanning (keynote, plenary)</label>
             </div>
             <div className="btn-row" style={{ justifyContent: "flex-end" }}><button className="btn inline ghost" onClick={() => setEditing(null)}>Cancel</button><button className="btn inline" disabled={busy} onClick={save}>{editing.id ? "Save changes" : "Add session"}</button></div>
