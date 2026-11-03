@@ -60,7 +60,12 @@ function AskInner() {
   const openTitles = (data?.sessions || []).filter((s) => s.open).map((s) => s.title);
   const focus = data?.sessions.find((s) => s.id === sessionId);
 
-  useEffect(() => { api<{ messages: Msg[] }>("/api/chat").then((r) => setMsgs(r.messages.map((m) => ({ ...m, sources: m.sources || [] })))).catch(() => {}); }, []);
+  const fresh = params.get("fresh") === "1";
+  useEffect(() => {
+    if (fresh) { setMsgs([]); router.replace(sessionId ? `/ask?session=${sessionId}` : "/ask"); return; }
+    api<{ messages: Msg[] }>("/api/chat").then((r) => setMsgs(r.messages.map((m) => ({ ...m, sources: m.sources || [] })))).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => { logRef.current?.lastElementChild?.scrollIntoView({ block: "end", behavior: "smooth" }); }, [msgs]);
   useEffect(() => { if (preset && !busy) { void ask(preset); router.replace(sessionId ? `/ask?session=${sessionId}` : "/ask"); } /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [preset]);
 

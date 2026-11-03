@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
-import { Home, Scan, Spark, Book, Back } from "./icons";
-import { asset } from "./api";
+import { Home, Scan, Spark, Book, Back, Plus } from "./icons";
+import { api, asset } from "./api";
 
 /* ---------- toast ---------- */
 const ToastCtx = createContext<(msg: string) => void>(() => {});
@@ -17,7 +18,28 @@ export const useToast = () => useContext(ToastCtx);
 
 /* ---------- shell ---------- */
 export function App({ children, dark, wide }: { children: ReactNode; dark?: boolean; wide?: boolean }) {
-  return <main className={`app ${dark ? "dark" : ""} ${wide ? "wide" : ""}`}>{children}</main>;
+  return <main className={`app ${dark ? "dark" : ""} ${wide ? "wide" : ""}`}>{children}{!wide && <NewChatFab />}</main>;
+}
+
+/** Floating "New chat": from any attendee screen, start a fresh conversation with Lekhak. */
+function NewChatFab() {
+  const path = usePathname();
+  const router = useRouter();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const hidden = ["/", "/install", "/signin", "/scan", "/ask"].includes(path) || path.startsWith("/pass/") || path.startsWith("/unlock/");
+  if (hidden) return null;
+  const go = async () => {
+    if (busy) return; setBusy(true);
+    try { await api("/api/chat", { method: "DELETE" }); toast("New chat started"); router.push("/ask?fresh=1"); }
+    catch { router.push("/ask"); }
+    finally { setBusy(false); }
+  };
+  return (
+    <button type="button" className="fab no-print" onClick={go} disabled={busy} aria-label="Start a new chat with Lekhak">
+      <span className="fab-ic"><Plus size={18} /><Spark size={16} /></span><span className="fab-lbl">New chat</span>
+    </button>
+  );
 }
 
 export function Nav({ on }: { on: "home" | "scan" | "ask" | "myday" | "" }) {
