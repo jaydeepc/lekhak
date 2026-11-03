@@ -3,10 +3,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { App, Hero, Nav } from "@/components/ui";
-import { Bell, Lock, Spark, Unlock } from "@/components/icons";
+import { Lock, Spark, Unlock } from "@/components/icons";
 import { api, fmtOffset, timeHM, useSessions, type Segment } from "@/components/api";
 import { useRequireMe } from "@/components/guard";
-import { useToast } from "@/components/ui";
 import { DeckViewer, type DeckDoc } from "@/components/DeckViewer";
 
 type Doc = DeckDoc;
@@ -16,7 +15,6 @@ export default function SessionPage() {
   const { id } = useParams<{ id: string }>();
   const { data } = useSessions(5000);
   const s = data?.sessions.find((x) => x.id === id);
-  const toast = useToast();
   const [tab, setTab] = useState<"about" | "deck" | "transcript">("about");
   const [docs, setDocs] = useState<Doc[] | null>(null);
   const [segs, setSegs] = useState<Segment[] | null>(null);
@@ -38,7 +36,7 @@ export default function SessionPage() {
             <div><h2 style={{ fontSize: 26 }}>Be in the room to unlock it.</h2><p className="lead" style={{ fontSize: 15, marginTop: 8 }}>{s.tagline || s.description}. Attend the session and scan the QR on the last slide — the deck, the transcript and Lekhak&apos;s notes open here.</p></div>
             <div className="sess"><div className="next"><b>{timeHM(s.startAt)}</b><span>{s.status === "ended" ? "Ended" : "Starts"} · {s.room}</span></div><div><b>{timeHM(s.endAt)}</b><span>Ends{s.speaker ? ` · ${s.speaker}` : ""}</span></div></div>
           </div>
-          <div className="col" style={{ gap: 12 }}><Link className="btn lg" href="/scan">I&apos;m here — scan</Link><button className="btn ghost" onClick={() => toast(`We'll nudge you 5 minutes before ${timeHM(s.startAt)}`)}><Bell />Remind me 5 minutes before</button></div>
+          <div className="col" style={{ gap: 12 }}><Link className="btn lg" href="/scan">I&apos;m here — scan</Link></div>
         </div><Nav on="" />
       </div></App>
     );

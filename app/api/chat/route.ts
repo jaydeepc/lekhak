@@ -7,9 +7,15 @@ import type { ChatSource } from "@/lib/types";
 
 export const maxDuration = 120;
 
+async function resetBoundary(attendeeId: ObjectId): Promise<Date> {
+  const a = await (await C.attendees()).findOne({ _id: attendeeId }, { projection: { chatResetAt: 1 } });
+  return a?.chatResetAt || new Date(0);
+}
+
 export const GET = handle(async (req) => {
   const att = await requireAttendee(req);
-  const items = await (await C.chats()).find({ attendeeId: new ObjectId(att.sub) }).sort({ createdAt: -1 }).limit(40).toArray();
+  const since = await resetBoundary(new ObjectId(att.sub));
+  const items = await (await C.chats()).find({ attendeeId: new ObjectId(att.sub), createdAt: { $gt: since } }).sort({ createdAt: -1 }).limit(40).toArray();
   return json({ messages: items.reverse().map((m) => ({ id: m._id.toString(), role: m.role, text: m.text, sources: m.sources || [], at: m.createdAt })) });
 });
 
@@ -20,7 +26,8 @@ export const POST = handle(async (req) => {
   const question = str(b.question, "Question", { max: 2000 });
   const attendeeId = new ObjectId(att.sub);
   const chats = await C.chats();
-  const history = (await chats.find({ attendeeId }).sort({ createdAt: -1 }).limit(8).toArray()).reverse().map((m) => ({ role: m.role, text: m.text }));
+  const since = await resetBoundary(attendeeId);
+  const history = (await chats.find({ attendeeId, createdAt: { $gt: since } }).sort({ createdAt: -1 }).limit(8).toArray()).reverse().map((m) => ({ role: m.role, text: m.text }));
   await chats.insertOne({ _id: new ObjectId(), attendeeId, sessionId: b.sessionId && ObjectId.isValid(b.sessionId) ? new ObjectId(b.sessionId) : null, role: "user", text: question, createdAt: new Date() });
 
   const { talks, decks, sessions } = await buildChatContext({ attendeeId, question, focusSessionId: b.sessionId || null });
@@ -56,4 +63,11 @@ export const POST = handle(async (req) => {
     },
   });
   return new Response(stream, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Accel-Buffering": "no" } });
+});
+
+/** Start a new chat: everything before now disappears from the conversation and from Lekhak's context. */
+export const DELETE = handle(async (req) => {
+  const att = await requireAttendee(req);
+  await (await C.attendees()).updateOne({ _id: new ObjectId(att.sub) }, { $set: { chatResetAt: new Date() } });
+  return json({ ok: true });
 });

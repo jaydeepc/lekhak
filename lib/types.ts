@@ -48,6 +48,7 @@ export interface AttendeeDoc {
   createdAt: Date;
   lastSeenAt?: Date | null;
   signedInAt?: Date | null;
+  chatResetAt?: Date | null; // messages before this are hidden from the chat and from the model's context
 }
 
 export interface PresenceDoc {

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { App, Nav } from "@/components/ui";
-import { Bell, Lock, Logo, Unlock } from "@/components/icons";
+import { Lock, Logo, Unlock } from "@/components/icons";
 import { timeHM, useSessions, type Session } from "@/components/api";
 import { useRequireMe } from "@/components/guard";
 
@@ -23,7 +23,7 @@ export default function HomePage() {
       <div className="screen">
         <div className="pad safe-top row between" style={{ paddingTop: "max(24px,env(safe-area-inset-top))" }}>
           <div><div className="small" style={{ fontWeight: 700 }}>{greet}</div><div style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{first}</div></div>
-          <div className="row" style={{ gap: 10 }}><Link className="icon-btn" href="/notifications" aria-label="Notifications" style={{ background: "#fff", color: "var(--navy-2)" }}><Bell /></Link><Logo h={30} /></div>
+          <div className="row" style={{ gap: 10 }}><Logo h={30} /></div>
         </div>
         {feature && (
           <div className="pad" style={{ paddingTop: 18 }}>

@@ -27,4 +27,5 @@ export const Settings = ({ size, ...p }: P) => <svg {...base(size)} {...p}><circ
 export const Upload = ({ size, ...p }: P) => <svg {...base(size)} {...p}><path d="M12 16V4" /><path d="m7 9 5-5 5 5" /><path d="M5 20h14" /></svg>;
 export const Trash = ({ size, ...p }: P) => <svg {...base(size || 18)} {...p}><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /></svg>;
 export const Printer = ({ size, ...p }: P) => <svg {...base(size)} {...p}><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>;
+export const Plus = ({ size, ...p }: P) => <svg {...base(size, 2.6)} {...p}><path d="M12 5v14M5 12h14" /></svg>;
 export const Logo = ({ h = 30 }: { h?: number }) => <img src="/assets/logo.svg" alt="Piramal Finance" style={{ height: h, width: "auto" }} />;

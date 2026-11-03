@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { App, Md, Nav, speak, useToast } from "@/components/ui";
-import { Back, Mic, Pause, Play, Send } from "@/components/icons";
+import { Back, Mic, Pause, Play, Plus, Send } from "@/components/icons";
 import { api, useSessions } from "@/components/api";
 import { useRequireMe } from "@/components/guard";
 import { LiveMic } from "@/components/liveMic";
@@ -83,6 +83,12 @@ function AskInner() {
   }
   useEffect(() => () => { micRef.current?.stop(); }, []);
 
+  async function newChat() {
+    if (busy) return;
+    try { await api("/api/chat", { method: "DELETE" }); setMsgs([]); setQ(""); toast("New chat started"); }
+    catch (e) { toast(e instanceof Error ? e.message : "Could not start a new chat"); }
+  }
+
   const suggestions = focus
     ? [`What did ${focus.speaker?.split(" ")[0] || "the speaker"} say in the last 2 minutes?`, `Summarise ${focus.title} so far`, "कौन से आंकड़े बताए गए?"]
     : ["What did Jairam say about gold loan growth?", "Is LLM usage expensive?", "STP रेट क्या है?", "What does the deck say about BYOT?"];
@@ -93,6 +99,7 @@ function AskInner() {
         <div className="pad safe-top row" style={{ gap: 12, paddingTop: "max(24px,env(safe-area-inset-top))", paddingBottom: 14, borderBottom: "1px solid var(--line)" }}>
           <Link className="icon-btn" href={sessionId ? `/live/${sessionId}` : "/home"} aria-label="Back"><Back /></Link><div className="orb sm" />
           <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 17, fontWeight: 800 }}>Lekhak</div><div className="small" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{focus ? `Focused on ${focus.title}` : openTitles.length ? `Can answer from: ${openTitles.join(", ")}` : "Sign in to ask"}</div></div>
+          {msgs.length > 0 && <button type="button" className="pill" style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }} onClick={newChat} disabled={busy} aria-label="Start a new chat"><Plus size={14} />New chat</button>}
         </div>
         <div ref={logRef} className="pad col" style={{ gap: 20, paddingTop: 20, paddingBottom: 20, flex: 1 }}>
           {!msgs.length && <div className="col" style={{ gap: 14 }}><p className="answer">Ask me about anything said in the room, in any language — I&apos;ll quote the moment, tell you what the deck adds, and you can hear it again.</p><div className="row" style={{ gap: 8, flexWrap: "wrap" }}>{suggestions.map((s) => <button key={s} type="button" className="pill" onClick={() => ask(s)}>{s}</button>)}</div></div>}
