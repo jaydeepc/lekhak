@@ -39,7 +39,7 @@ export default function MyDay() {
         <header className="hero md-hero" style={{ backgroundImage: "url('/assets/il-digest.jpg?v=3')" }}>
           <div className="top safe-top">
             <Link className="icon-btn" href="/home" aria-label="Back"><Back /></Link>
-            <div className="row" style={{ gap: 8 }}><button className="chip glass no-print" style={{ border: "1px solid rgba(255,255,255,.4)" }} onClick={() => window.print()}>Export PDF</button><div className="logo-chip" style={{ alignSelf: "center" }}><Logo h={26} /></div></div>
+            <div className="row" style={{ gap: 8 }}><button className="chip glass no-print" style={{ border: "1px solid rgba(255,255,255,.4)" }} onClick={() => window.print()}>Export PDF</button><div className="logo-chip" style={{ alignSelf: "center" }}><Logo h={32} /></div></div>
           </div>
           <div>
             <span className="chip glass" style={{ marginBottom: 10 }}>Lekhak&apos;s notes{dateLabel ? ` · ${dateLabel}` : ""}</span>
