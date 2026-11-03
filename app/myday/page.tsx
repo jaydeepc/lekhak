@@ -132,7 +132,7 @@ function Ring({ value, max }: { value: number; max: number }) {
   const r = 30, c = 2 * Math.PI * r, pct = Math.min(1, value / max);
   return (
     <svg className="md-ring" viewBox="0 0 76 76" width="76" height="76" role="img" aria-label={`${value} of ${max} sessions attended`}>
-      <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#2a65fe" /><stop offset="1" stopColor="#59bdfc" /></linearGradient></defs>
+      <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#F26841" /><stop offset="1" stopColor="#EF4123" /></linearGradient></defs>
       <circle cx="38" cy="38" r={r} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="8" />
       <circle cx="38" cy="38" r={r} fill="none" stroke="url(#ringGrad)" strokeWidth="8" strokeLinecap="round" strokeDasharray={`${c * pct} ${c}`} transform="rotate(-90 38 38)" style={{ transition: "stroke-dasharray .8s ease" }} />
       <text x="38" y="43" textAnchor="middle" fontSize="18" fontWeight="600" fill="#ffffff" fontFamily="inherit">{Math.round(pct * 100)}%</text>
