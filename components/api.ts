@@ -89,13 +89,14 @@ export function useLiveTranscript(sessionId: string | null) {
 
   useEffect(() => {
     if (!sessionId) return;
-    let stopped = false, timer: ReturnType<typeof setTimeout> | null = null, failures = 0;
+    let stopped = false, timer: ReturnType<typeof setTimeout> | null = null, failures = 0, first = true;
     afterRef.current = 0; setSegments([]); setInterim(""); setState(null);
     const tick = async () => {
       if (stopped) return;
       let delay = statusRef.current === "live" ? 1000 : 4000;
-      if (document.visibilityState !== "visible") delay = 5000;
+      if (!first && document.visibilityState !== "visible") delay = 5000;
       else {
+        first = false;
         try {
           const r = await api<{ status: Session["status"]; lastSeq: number; nowOffsetMs: number; interim: string; segments: Segment[] }>(`/api/sessions/${sessionId}/feed?after=${afterRef.current}`);
           if (stopped) return;

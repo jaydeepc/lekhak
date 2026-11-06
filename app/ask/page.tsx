@@ -50,7 +50,8 @@ function AskInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => { logRef.current?.lastElementChild?.scrollIntoView({ block: "end", behavior: "smooth" }); }, [msgs]);
-  useEffect(() => { if (preset && !busy) { void ask(preset); router.replace(sessionId ? `/ask?session=${sessionId}` : "/ask"); } /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [preset]);
+  const presetFired = useRef(false);
+  useEffect(() => { if (preset && !busy && !presetFired.current) { presetFired.current = true; void ask(preset); router.replace(sessionId ? `/ask?session=${sessionId}` : "/ask"); } /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [preset]);
 
   async function ask(question: string) {
     const text = question.trim(); if (!text || busy) return;
