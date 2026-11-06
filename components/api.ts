@@ -140,5 +140,5 @@ export function timeHM(d: string | Date) { return new Date(d).toLocaleTimeString
 export function appUrl() { return (process.env.NEXT_PUBLIC_APP_URL || (typeof location !== "undefined" ? location.origin : "")).replace(/\/$/, ""); }
 
 /** Image URLs carry a version so long-cached old artwork is never shown after a re-theme. */
-export const ASSET_VERSION = "3";
+export const ASSET_VERSION = "4";
 export function asset(src: string) { return src && src.startsWith("/assets/") && !src.includes("?") ? `${src}?v=${ASSET_VERSION}` : src; }

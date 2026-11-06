@@ -36,10 +36,10 @@ export default function MyDay() {
   return (
     <App>
       <div className="screen md">
-        <header className="hero md-hero" style={{ backgroundImage: "url('/assets/il-digest.jpg?v=3')" }}>
+        <header className="hero md-hero" style={{ backgroundImage: "url('/assets/il-digest.jpg?v=4')" }}>
           <div className="top safe-top">
             <Link className="icon-btn" href="/home" aria-label="Back"><Back /></Link>
-            <div className="row" style={{ gap: 8 }}><button className="chip glass no-print" style={{ border: "1px solid rgba(255,255,255,.4)" }} onClick={() => window.print()}>Export PDF</button></div>
+            <div className="row" style={{ gap: 8 }}><button className="chip glass no-print" onClick={() => window.print()}>Export PDF</button></div>
           </div>
           <div>
             <span className="chip glass" style={{ marginBottom: 10 }}>Lekhak&apos;s notes{dateLabel ? ` · ${dateLabel}` : ""}</span>
@@ -77,9 +77,9 @@ export default function MyDay() {
               {d.threeLines && (
                 <section className="md-quote">
                   <div className="qmark">“</div>
-                  <div className="label" style={{ color: "rgba(255,255,255,.85)" }}>Lekhak&apos;s three lines</div>
+                  <div className="label">Lekhak&apos;s three lines</div>
                   <p>{d.threeLines}</p>
-                  <div className="row between" style={{ fontSize: 12, fontWeight: 600, opacity: .9 }}><span>Say this to a colleague tonight</span><Spark size={16} /></div>
+                  <div className="row between" style={{ fontSize: 12, fontWeight: 700, color: "var(--flame-ink)" }}><span>Say this to a colleague tonight</span><Spark size={16} /></div>
                 </section>
               )}
 
@@ -122,10 +122,10 @@ function Ring({ value, max }: { value: number; max: number }) {
   const r = 30, c = 2 * Math.PI * r, pct = Math.min(1, value / max);
   return (
     <svg className="md-ring" viewBox="0 0 76 76" width="76" height="76" role="img" aria-label={`${value} of ${max} sessions attended`}>
-      <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#F26841" /><stop offset="1" stopColor="#EF4123" /></linearGradient></defs>
-      <circle cx="38" cy="38" r={r} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="8" />
+      <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f16443" /><stop offset="1" stopColor="#eb542c" /></linearGradient></defs>
+      <circle cx="38" cy="38" r={r} fill="none" stroke="#d7e2ee" strokeWidth="8" />
       <circle cx="38" cy="38" r={r} fill="none" stroke="url(#ringGrad)" strokeWidth="8" strokeLinecap="round" strokeDasharray={`${c * pct} ${c}`} transform="rotate(-90 38 38)" style={{ transition: "stroke-dasharray .8s ease" }} />
-      <text x="38" y="43" textAnchor="middle" fontSize="18" fontWeight="600" fill="#ffffff" fontFamily="inherit">{Math.round(pct * 100)}%</text>
+      <text x="38" y="43" textAnchor="middle" fontSize="18" fontWeight="700" fill="#071a50" fontFamily="inherit">{Math.round(pct * 100)}%</text>
     </svg>
   );
 }

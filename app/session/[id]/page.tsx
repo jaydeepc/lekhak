@@ -30,7 +30,7 @@ export default function SessionPage() {
   if (!s.open) {
     return (
       <App><div className="screen">
-        <Hero image={s.image} eyebrow={s.room} title={s.title} dim right={<span className="chip glass" style={{ border: "1px solid rgba(255,255,255,.3)" }}><Lock />Locked</span>} />
+        <Hero image={s.image} eyebrow={s.room} title={s.title} dim right={<span className="chip glass"><Lock />Locked</span>} />
         <div className="pad col" style={{ paddingTop: 26, paddingBottom: 40, justifyContent: "space-between", flex: 1, gap: 20 }}>
           <div className="col" style={{ gap: 20 }}>
             <div><h2 style={{ fontSize: 26 }}>Be in the room to unlock it.</h2><p className="lead" style={{ fontSize: 15, marginTop: 8 }}>{s.tagline || s.description}. Attend the session and scan the QR on the last slide — the deck, the transcript and Lekhak&apos;s notes open here.</p></div>

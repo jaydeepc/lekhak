@@ -24,7 +24,7 @@ function UnlockInner() {
   return (
     <App>
       <div className="screen">
-        <div className="hero fade" style={{ backgroundImage: "url('/assets/il-unlock.jpg?v=3')", minHeight: 360, justifyContent: "flex-start" }}>
+        <div className="hero fade" style={{ backgroundImage: "url('/assets/il-unlock.jpg?v=4')", minHeight: 360, justifyContent: "flex-start" }}>
           <div className="top safe-top"><span className="chip glass">{s?.room || "…"} · {new Date().toTimeString().slice(0, 5)}</span></div>
         </div>
         <div className="pad col" style={{ paddingTop: 8, paddingBottom: 40, justifyContent: "space-between", flex: 1, gap: 24 }}>

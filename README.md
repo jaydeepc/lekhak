@@ -69,7 +69,7 @@ This adds a `/etc/hosts` entry, issues a locally-trusted certificate with mkcert
 
 ## Theme
 
-The app follows the **Piramal.ai** design system (midnight canvas with warm and cool haze, royal-blue cards, sky-blue actions, the flame only as the mark; Kumbh Sans with Montserrat for data). Tokens live at the top of `app/globals.css`; brand lockups and backdrops under `public/brand/`; screen illustrations under `public/assets/` were generated to match (GPT Image 2.5 "sunburst" via Higgsfield).
+The app follows the **Piramal.ai** design system, Light theme (white ground with a peach haze top-left and a pale-blue haze bottom-right, a navy-to-flame foot bar, orange-led accents with blue as secondary, navy text, Open Sans, 1px edges, no shadows). Tokens live at the top of `app/globals.css`; brand lockups and backdrops under `public/brand/`; screen illustrations under `public/assets/` were generated to match (GPT Image 2.5 "sunburst" via Higgsfield).
 
 ## Data (MongoDB)
 
